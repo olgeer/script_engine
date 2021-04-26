@@ -1,0 +1,2644 @@
+[
+  {
+    "name": "天下书库",
+    "descripe": "书籍种类丰富，中外名著及网络文章均有收集。",
+    "url": "http://www.txshuku.la",
+    "encoding": "gbk",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "2.0",
+    "test": {
+      "novelName": "弟子规"
+    },
+    "search": {
+      "searchProcess": [
+        {
+          "action": "getHtml",
+          "url": "{url}/modules/article/search.php?searchtype=articlename&searchkey={searchkey}",
+          "method": "get",
+          "charset": "gbk"
+        }
+      ],
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "搜索结果"
+        }
+      },
+      "resultProcess": [
+        {
+          "action": "foreach",
+          "preProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".xs-list"
+            }
+          ],
+          "splitProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//ul/li"
+            }
+          ]
+        }
+      ],
+      "fillinBookInfo": {
+        "preProcess": [
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[1]/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[1]/a/@href"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[2]/span[1]/text()"
+            },
+            {
+              "action": "replace",
+              "from": "作者：",
+              "to": ""
+            }
+          ],
+          "length": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[3]/span[2]/text()"
+            },
+            {
+              "action": "replace",
+              "from": "字数：",
+              "to": ""
+            }
+          ],
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[3]/span[1]/text()"
+            },
+            {
+              "action": "replace",
+              "from": "更新：",
+              "to": ""
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//p[2]/span[3]/text()"
+            },
+            {
+              "action": "replace",
+              "from": "状态：",
+              "to": ""
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": [
+        {
+          "action": "foreach",
+          "preProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".l_b"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//div/a[1]/@href"
+            },
+            {
+              "action": "setValue",
+              "valueName": "muluUrl"
+            },
+            {
+              "action": "getHtml",
+              "url": "{muluUrl}",
+              "method": "get",
+              "charset": "gbk"
+            },
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "select[name='pageselect']"
+            }
+          ],
+          "splitProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//option/@value"
+            },
+            {
+              "action": "foreach",
+              "preProcess": [
+                {
+                  "action": "concat",
+                  "front": "{url}",
+                  "back": ""
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "pageUrl"
+                },
+                {
+                  "action": "getHtml",
+                  "url": "{pageUrl}",
+                  "method": "get",
+                  "charset": "gbk"
+                },
+                {
+                  "action": "selector",
+                  "type": "dom",
+                  "script": ".mulu_list"
+                }
+              ],
+              "splitProcess":[
+                {
+                  "action": "multiSelector",
+                  "type": "xpath",
+                  "script": "//a/@href"
+                },
+                {
+                  "action": "foreach",
+                  "preProcess": [
+                    {
+                      "action": "replace",
+                      "from": "/html/",
+                      "to": "/chapterfull/"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "天下书库"
+          }
+        },
+        "preProcess": [],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".h1title"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div#htmlContent"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n\\n\\n",
+              "to": "\n\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "伍九文学",
+    "descripe": "主要为网络文章，书籍无防盗链。",
+    "url": "https://www.wujiuwenxue.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 4,
+    "version": "1.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchProcess": [
+        {
+          "action": "getHtml",
+          "url": "{url}/search.html",
+          "method": "post",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "body": "searchtype=all&searchkey={searchkey}",
+          "charset": "utf8"
+        }
+      ],
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "专题推荐"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "#sitembox"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//dl"
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//dd[1]/h3/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//dd[1]/h3/a/@href"
+            },
+            {
+              "action": "concat",
+              "front": "{url}"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//dd[4]/a/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//dd[2]/span/text()"
+            }
+          ],
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//dd[4]/span/text()"
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:status\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            },
+            {
+              "action": "split",
+              "pattern": "观看小说:",
+              "index": 1
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "#list"
+          },
+          {
+            "action": "split",
+            "pattern": "列表</a>",
+            "index": 1
+          },
+          {
+            "action": "concat",
+            "front": "<dt>",
+            "back": ""
+          },
+          {
+            "action": "replace",
+            "from": "<dt[\\S| |\\n|\\r]*?>[^<]*</dt>",
+            "to": ""
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "无防盗章节"
+          }
+        },
+        "preProcess": [
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.bookname"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#content"
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "喜欢[\\S]*最快。",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n\\n",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "\\n",
+              "to": "\n\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "下书网",
+    "descripe": "书籍范围广，古今中外均有收藏。",
+    "url": "https://www.shutxt.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "2.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchProcess": [
+        {
+          "action": "getHtml",
+          "url": "{url}/e/search/index.php",
+          "method": "post",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "body": "show=title&keyboard={searchkey}",
+          "charset": "utf8"
+        }
+      ],
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "搜索结果"
+        }
+      },
+      "resultProcess": [
+        {
+          "action": "foreach",
+          "preProcess": [
+          ],
+          "splitProcess": [
+            {
+              "action": "multiSelector",
+              "type": "dom",
+              "script": ".sbintro"
+            }
+          ]
+        }
+      ],
+      "fillinBookInfo": {
+        "preProcess": [
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//div/h3/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//div/h3/a/@href"
+            },
+            {
+              "action": "concat",
+              "front": "{url}"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//div/div[2]/text()"
+            },
+            {
+              "action": "replace",
+              "from": "\\n",
+              "to": ""
+            },
+            {
+              "action": "split",
+              "pattern": "状态: ",
+              "index": 1
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "在线阅读"
+          }
+        },
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": [
+        {
+          "action": "foreach",
+          "preProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#yuedu"
+            },
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "table"
+            }
+          ],
+          "splitProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//a/@href"
+            },
+            {
+              "action": "sort",
+              "asc": true
+            },
+            {
+              "action": "foreach",
+              "preProcess": [
+                {
+                  "action": "concat",
+                  "front": "{url}",
+                  "back": ""
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".atitle"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            },
+            {
+              "action": "replace",
+              "from": "《\\S*》",
+              "to": ""
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.zw"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<a[\\S| |\\n|\\r]*?>[^<]*</a>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n\\n\\n",
+              "to": "\n\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "斗破小说网",
+    "descripe": "多源采集比对后发布，质量比较有保证。",
+    "url": "http://doupocangqiong1.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "1.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchProcess": [
+        {
+          "action": "getHtml",
+          "url": "{url}/search.html?searchkey={searchkey}",
+          "method": "get",
+          "charset": "utf8"
+        }
+      ],
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "搜索结果"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "ul.marklist"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//li"
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/div[2]/p[1]/span/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/div[2]/p[1]/span/a/@href"
+            },
+            {
+              "action": "concat",
+              "front": "{url}",
+              "back": ""
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/div[2]/p[2]/a/text()"
+            }
+          ],
+          "writer": null,
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/div[2]/p[2]"
+            },
+            {
+              "action": "replace",
+              "from": "<a[\\S| |\\n|\\r]*?>[^<]*</a>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "最新：",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": " ",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n",
+              "to": ""
+            }
+          ],
+          "status": null,
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/div[1]/a/img/@src"
+            },
+            {
+              "action": "concat",
+              "front": "{url}",
+              "back": ""
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:status\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "ul.dirlist"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[name=\"description\"]",
+              "property": "content"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "无弹窗阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.title"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/a/text()"
+            },
+            {
+              "action": "trim"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.frame-btn"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "/a[4]/@href"
+            },
+            {
+              "action": "push"
+            },
+            {
+              "action": "split",
+              "pattern": "cid=",
+              "index": 1
+            },
+            {
+              "action": "setValue",
+              "valueName": "cid"
+            },
+            {
+              "action": "pop"
+            },
+            {
+              "action": "split",
+              "pattern": "novelid=",
+              "index": 1
+            },
+            {
+              "action": "split",
+              "pattern": "&",
+              "index": 0
+            },
+            {
+              "action": "setValue",
+              "valueName": "bid"
+            },
+            {
+              "action": "setValue",
+              "valueName": "siteid",
+              "value": "0"
+            },
+            {
+              "action": "getHtml",
+              "url": "{url}/novelsearch/chapter/transcode.html",
+              "method": "post",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+              },
+              "body": "siteid=0&bid={bid}&cid={cid}",
+              "charset": "utf8"
+            },
+            {
+              "action": "json",
+              "keyName": "info"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "霹雳书坊",
+    "descripe": "女频书籍较为丰富，武侠小说齐全，国外畅销书也有收藏。",
+    "url": "https://www.pilibook.com",
+    "encoding": "gbk",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "1.0",
+    "test": {
+      "novelName": "天空"
+    },
+    "search": {
+      "searchUrl": "/modules/article/search.php?searchkey=",
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "compare",
+          "exp": "霹雳书坊"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "table.grid"
+          },
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//table/tbody/tr"
+          },
+          {
+            "action": "remove",
+            "index": 0
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/@href"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[2]/a/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[3]/text()"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[4]/text()"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[5]/text()"
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "在线阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:status\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selectorAt",
+            "type": "dom",
+            "script": "div.book_list",
+            "index": 1
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "霹雳书坊"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".h1title"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#htmlContent"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "笔趣阁5",
+    "descripe": "网络文学为主，封面图片缺失。",
+    "url": "https://www.boy5.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "1.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchUrl": "/modules/article/search.php?searchkey=",
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "搜索结果"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "div.lastupdate"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//li"
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[2]/a[1]/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[2]/a[1]/@href"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[2]/a[2]/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//li/span[3]/a/text()"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//li/span[4]/text()"
+            }
+          ],
+          "status": null
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文免费阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:lastest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "status": null,
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": ".info-chapters"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{bookinfo.novelHome}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"description\"]",
+              "property": "content"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "在线免费阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".reader-main"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            },
+            {
+              "action": "trim"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".content"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "神书网",
+    "descripe": "网络文学为主，速度一般，有访问速度限制。",
+    "url": "http://www.skyzww.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 3,
+    "version": "1.0",
+    "test": {
+      "novelName": "剑来"
+    },
+    "search": {
+      "searchUrl": "/search/?searchkey=",
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "神书网"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "table.grid"
+          },
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//table/tbody/tr"
+          },
+          {
+            "action": "remove",
+            "index": 0
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/@href"
+            },
+            {
+              "action": "concat",
+              "front": "{url}",
+              "back": ""
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[2]/span/a/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[3]/span/text()"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[4]/text()"
+            }
+          ],
+          "status": null
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".info"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#intro"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\r",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n",
+              "to": ""
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.img"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//img/@src"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "#chapterlist"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"description\"]",
+              "property": "content"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "无弹窗阅读环境"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".book_content_text"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#book_text"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n\\n",
+              "to": "\n"
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "言情中文网",
+    "descripe": "网络文学为主，女文资源丰富。",
+    "url": "https://www.yqzww.cc",
+    "encoding": "gbk",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "1.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchUrl": "/modules/article/search.php?searchkey=",
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "搜索结果"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": ".novelslistss"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//li"
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[2]/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[2]/a/@href"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//li/span[3]/a/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//li/span[4]/text()"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//li/span[5]/text()"
+            }
+          ],
+          "status": null
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "无弹窗"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#info"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".fr"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//a/@href"
+            },
+            {
+              "action": "replace",
+              "from": "m.yqzww",
+              "to": "www.yqzww"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#info"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//p[1]/a/text()"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#intro"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\r",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "\\n",
+              "to": ""
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#fmimg"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//img/@src"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "#list"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          },
+          {
+            "action": "sublist",
+            "begin": 12
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{bookinfo.novelHome}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".bookname"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/text()"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "#content"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "就爱文学网",
+    "descripe": "网络文学为主。",
+    "url": "http://www.92wx.com",
+    "encoding": "utf8",
+    "enable": true,
+    "debugMode": false,
+    "speedLevel": 1,
+    "version": "1.0",
+    "test": {
+      "novelName": "围城"
+    },
+    "search": {
+      "searchUrl": "/modules/article/search.php?searchkey=",
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "就爱文学网"
+        }
+      },
+      "resultProcess": {
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          },
+          {
+            "action": "replace",
+            "from": "\\r\\n",
+            "to": ""
+          },
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "table"
+          },
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//table/tbody/tr"
+          },
+          {
+            "action": "remove",
+            "index": 0
+          }
+        ],
+        "endProcess": []
+      },
+      "fillinBookInfo": {
+        "preProcess": [
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[1]/a/@href"
+            },
+            {
+              "action": "replace",
+              "from": ".html",
+              "to": "/"
+            },
+            {
+              "action": "replace",
+              "from": "book",
+              "to": "html"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//table/tbody/tr/td[2]/a/text()"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[3]/text()"
+            }
+          ],
+          "length": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[4]/text()"
+            }
+          ],
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[5]/text()"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "xpath",
+              "single": true,
+              "script": "//table/tbody/tr/td[6]/text()"
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文免费阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".divbox"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//div[2]/div[1]/text()"
+            },
+            {
+              "action": "split",
+              "pattern": "　",
+              "index": 0
+            },
+            {
+              "action": "replace",
+              "from": "作者：",
+              "to": ""
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.gray"
+            },
+            {
+              "action": "trim"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".divbox>div:first-child"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//img/@src"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "table"
+          },
+          {
+            "action": "concat",
+            "front": "<table>",
+            "back": "</table>"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "在线阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".ctitle"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".ccontent"
+            },
+            {
+              "action": "htmlDecode"
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
+              "to": ""
+            },
+            {
+              "action": "replace",
+              "from": "<[^>]*>",
+              "to": ""
+            }
+          ]
+        }
+      }
+    }
+  }
+]
