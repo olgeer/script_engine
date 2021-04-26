@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:html/parser.dart';
 import 'package:logging/logging.dart';
-import 'package:script_engine/src/logger.dart';
 import 'package:xpath_parse/xpath_selector.dart';
 import 'package:fast_gbk/fast_gbk.dart';
 import 'actionCollect.dart';

@@ -2,6 +2,7 @@
 import 'package:logging/logging.dart';
 import 'package:script_engine/example/scriptObj.dart';
 import 'package:script_engine/script_engine.dart';
+import 'package:script_engine/src/actionCollect.dart';
 import 'package:script_engine/src/logger.dart';
 
 void main() async{
@@ -14,6 +15,8 @@ void main() async{
       logger.info(b);
     }
   }else logger.info(mr);
+
+  logger.severe(getCurrentPath());
   // var uri=Uri.parse("asset:assets/config.json");
   // logger.fine("${uri.scheme} -- ${uri.path}");
 }

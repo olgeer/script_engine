@@ -32,6 +32,68 @@ Future<Response> callWithRetry(
   return resp;
 }
 
+String getCurrentPath(){
+  return Directory.current.path;
+}
+
+Future<Response> getUrlFile(String url,
+    {int retry = 3, int seconds = 3,bool debugMode=false}) async {
+  Response tmp;
+  Dio dio;
+
+  if (dio == null)
+    dio = Dio(BaseOptions(
+      connectTimeout: 5000,
+      receiveTimeout: 3000,
+    ));
+
+  if (debugMode)
+    dio.interceptors.add(LogInterceptor(request: true, responseHeader: true));
+
+  do {
+    try {
+      tmp = await dio.get(url,options: Options(responseType: ResponseType.bytes));
+    } catch (e) {
+      logger.warning("get file error:$e");
+      await Future.delayed(Duration(seconds: seconds));
+    }
+  } while ((tmp == null || tmp.statusCode != 200) && --retry > 0);
+
+  return tmp?.statusCode == 200 ? tmp : null;
+}
+
+Future<String> saveUrlFile(String url,
+    {String saveFileWithoutExt, int retry = 3, int seconds = 3}) async {
+  Response tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
+
+  if (tmpResp != null) {
+    if (tmpResp.data > 0) {
+      List<String> tmpSpile = url.split("//")[1].split("/");
+      String fileExt;
+      if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
+        if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+          saveFileWithoutExt =
+               getCurrentPath()+ "/" + tmpSpile.last.split(".")[0];
+        }
+        fileExt = tmpSpile.last.split(".")[1];
+      } else {
+        if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+          saveFileWithoutExt = genKey(lenght: 12);
+        }
+        fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+      }
+
+      File urlFile = File("$saveFileWithoutExt.$fileExt");
+      if (urlFile.existsSync()) urlFile.deleteSync();
+      urlFile.createSync(recursive: true);
+      urlFile.writeAsBytesSync(tmpResp.data.toList(),
+          mode: FileMode.write, flush: true);
+      return urlFile.path;
+    }
+  }
+  return null;
+}
+
 Future<String> getHtml(String sUrl,
     {Map<String, dynamic> headers,
     Map<String, dynamic> queryParameters,
