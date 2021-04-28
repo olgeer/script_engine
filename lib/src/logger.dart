@@ -27,7 +27,7 @@ void initLogger({Level logLevel = Level.FINE}) {
         color = "{{@yellow}}";
         break;
       case 900:
-        color = "{{@cyan}}";
+        color = "{{@magenta}}";
         break;
       case 1000:
         color = "{{@red}}";

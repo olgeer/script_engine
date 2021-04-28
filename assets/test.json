@@ -112,7 +112,7 @@
               },
               {
                 "action": "getValue",
-                "value": "{novelName}-{writer}"
+                "exp": "{novelName}--{writer}"
               }
             ]
           }

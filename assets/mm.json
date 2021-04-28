@@ -1,0 +1,164 @@
+{
+  "processName": "testProc",
+  "globalValue": {
+    "url": "http://www.sunsmm.com",
+    "encoding": "gbk"
+  },
+  "functionDefine": {
+    "checkTitle": [
+      {
+        "action": "selector",
+        "type": "dom",
+        "script": "title"
+      },
+      {
+        "action": "condition",
+        "exp": [
+          {
+            "expType": "contain",
+            "exp": "搜索结果"
+          },
+          {
+            "expType": "contain",
+            "exp": "天下书库",
+            "relation": "and"
+          }
+        ],
+        "trueProcess": [
+          {
+            "action": "print",
+            "value": "Title匹配成功！"
+          }
+        ],
+        "falseProcess": [
+          {
+            "action": "print"
+          },
+          {
+            "action": "exit",
+            "code": 1
+          }
+        ]
+      }
+    ],
+    "getFirstPage": [
+      {
+        "action": "getHtml",
+        "url": "{url}/forumdisplay.php",
+        "queryParameters": {
+          "fid": 59
+        },
+        "method": "get",
+        "charset": "gbk"
+      },
+      {
+        "action": "selector",
+        "type": "dom",
+        "script": "[name=\"moderate\"]"
+      },
+      {
+        "action": "callMultiProcess",
+        "multiProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          },
+          {
+            "action": "foreach",
+            "eachProcess": [
+              {
+                "action": "condition",
+                "exp": [
+                  {
+                    "expType": "contain",
+                    "exp": "viewthread.php"
+                  },
+                  {
+                    "expType": "contain",
+                    "exp": "extra",
+                    "not": true,
+                    "relation": "and"
+                  }
+                ],
+                "trueProcess": [
+                  {
+                    "action": "concat",
+                    "front": "{url}/"
+                  },
+                  {
+                    "action": "print"
+                  }
+                ],
+                "falseProcess": [
+                  {
+                    "action": "break"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "remove",
+            "condition": [
+              {
+                "expType": "isNull"
+              }
+            ]
+          },
+          {
+            "action": "foreach",
+            "eachProcess": [
+              {
+                "action": "callFunction",
+                "functionName": "getThread"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "getThread": [
+      {
+        "action": "push"
+      },
+      {
+        "action": "split",
+        "pattern": "tid=",
+        "index": 1
+      },
+      {
+        "action": "setValue",
+        "valueName": "tid"
+      },
+      {
+        "action": "pop"
+      },
+      {
+        "action": "getHtml",
+        "url": "{this}",
+        "method": "get",
+        "charset": "gbk"
+      },
+      {
+        "action": "selector",
+        "type": "dom",
+        "script": "form"
+      },
+      {
+        "action": "print"
+      },
+      {
+        "action": "callFunction",
+        "functionName": "downloadPic"
+      }
+    ],
+    "downloadPic": []
+  },
+  "beginSegment": [
+    {
+      "action": "callFunction",
+      "functionName": "getFirstPage"
+    }
+  ]
+}

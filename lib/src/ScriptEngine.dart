@@ -86,21 +86,15 @@ class ScriptEngine {
     if (exp != null) {
       while (valueExp.hasMatch(ret)) {
         String valueName = valueExp.firstMatch(ret).group(1);
-        // switch (valueName) {
-        //   case "url":
-        //     ret = ret.replaceFirst(valueExp, url);
-        //     break;
-        //   case "bookinfo.novelHome":
-        //     ret = ret.replaceFirst(valueExp, selectedBookInfo.novelHome);
-        //     break;
-        //   case "bookinfo.novelName":
-        //     ret = ret.replaceFirst(valueExp, selectedBookInfo.novelName);
-        //     break;
-        //   default:
-        if (getValue(valueName) == null) break;
-        ret = ret.replaceFirst(valueExp, getValue(valueName));
-        // break;
-        // }
+        switch (valueName) {
+          case "currentPath":
+            ret = ret.replaceFirst(valueExp, getCurrentPath());
+            break;
+          default:
+            if (getValue(valueName) == null) break;
+            ret = ret.replaceFirst(valueExp, getValue(valueName));
+            break;
+        }
       }
     }
     return ret;
@@ -124,6 +118,7 @@ class ScriptEngine {
       String debugId = genKey(lenght: 8);
       for (var act in procCfg ?? []) {
         String preErrorProc=value;
+        setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null) {
           logger.warning("--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
@@ -138,20 +133,20 @@ class ScriptEngine {
       return null;
   }
 
-  dynamic action(String value, dynamic actCfg, {String debugId = ""}) async {
+  dynamic action(String value, dynamic ac, {String debugId = ""}) async {
     String ret;
     bool refreshValue=true;
-    if (debugMode) logger.fine("--$debugId--💃action($actCfg)");
+    if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
 
     try {
-      switch (actCfg["action"]) {
+      switch (ac["action"]) {
         case "print":
           //           {
           //             "action": "print",
           //             "value": "url"   //*
           //           }
-          logger.info(exchgValue(actCfg["value"] ?? value));
+          logger.info(exchgValue(ac["value"]) ?? value);
           refreshValue=false;
           break;
         case "replace":
@@ -160,7 +155,7 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          ret = value.replaceAll(RegExp(actCfg["from"]), actCfg["to"]);
+          ret = value.replaceAll(RegExp(ac["from"]), ac["to"]);
           break;
         case "htmlDecode":
           //           {
@@ -174,8 +169,8 @@ class ScriptEngine {
           //             "front": "<table>",
           //             "back": "</table>"
           //           }
-          String f = actCfg["front"] ?? "";
-          String b = actCfg["back"] ?? "";
+          String f = ac["front"] ?? "";
+          String b = ac["back"] ?? "";
           f = exchgValue(f);
           b = exchgValue(b);
           ret = "$f$value$b";
@@ -186,7 +181,7 @@ class ScriptEngine {
           //               "pattern": "cid=",
           //               "index": 1
           //             },
-          ret = value.split(actCfg["pattern"])[actCfg["index"]];
+          ret = value.split(ac["pattern"])[ac["index"]];
           break;
         case "trim":
           //            {
@@ -202,29 +197,29 @@ class ScriptEngine {
           //              "valueProcess":[] //*
           //            }
           //            如果value及valueProcess均为null则设 action value 为存入值
-          if (actCfg["valueName"] != null) {
+          if (ac["valueName"] != null) {
             setValue(
-                actCfg["valueName"],
-                actCfg["value"] ??
-                    await singleProcess(value, actCfg["valueProcess"] ?? []));
+                ac["valueName"],
+                ac["value"] ??
+                    await singleProcess(value, ac["valueProcess"] ?? []));
           }
           refreshValue=false;
           break;
         case "getValue":
           //            {
           //              "action": "getValue",
-          //              "valueName": "url",   //*
-          //              "value": "{novelName}-{writer}"   //*
+          //              "value": "url",   //*
+          //              "exp": "{novelName}-{writer}"   //*
           //            }
           //            value和valueName两者只有其中一个生效，value的优先级更高
-          ret = exchgValue(actCfg["value"]) ?? getValue(actCfg["valueName"]);
+          ret = exchgValue(ac["exp"]) ?? getValue(ac["value"]);
           break;
         case "removeValue":
           //            {
           //              "action": "removeValue",
           //              "valueName": "pageUrl"
           //            }
-          if (actCfg["valueName"] != null) removeValue(actCfg["valueName"]);
+          if (ac["valueName"] != null) removeValue(ac["valueName"]);
           refreshValue=false;
           break;
         case "clearEnv":
@@ -252,8 +247,8 @@ class ScriptEngine {
           //               "action": "json",
           //               "keyName": "info"
           //             },
-          if (actCfg["keyName"] != null)
-            ret = jsonDecode(value)[actCfg["keyName"]];
+          if (ac["keyName"] != null)
+            ret = jsonDecode(value)[ac["keyName"]];
           break;
         case "readFile":
           //            {
@@ -261,10 +256,10 @@ class ScriptEngine {
           //               "fileName": "{basePath}/file1.txt",
           //               "toValue": "txtfile"
           //             },
-          if (actCfg["fileName"] != null) {
-            String fileContent = readFile(exchgValue(actCfg["fileName"]));
-            if (actCfg["toValue"] != null) {
-              setValue(exchgValue(actCfg["toValue"]), fileContent);
+          if (ac["fileName"] != null) {
+            String fileContent = readFile(exchgValue(ac["fileName"]));
+            if (ac["toValue"] != null) {
+              setValue(exchgValue(ac["toValue"]), fileContent);
               ret = value;
             } else
               ret = fileContent;
@@ -276,9 +271,20 @@ class ScriptEngine {
           //               "fileName": "{basePath}/file1.txt",
           //               "saveContent": "{title}\n\r{content}"
           //             },
-          if (actCfg["fileName"] != null) {
-            saveFile(exchgValue(actCfg["fileName"]),
-                exchgValue(actCfg["saveContent"]) ?? value);
+          if (ac["fileName"] != null) {
+            saveFile(exchgValue(ac["fileName"]),
+                exchgValue(ac["saveContent"]) ?? value);
+          }
+          refreshValue=false;
+          break;
+        case "saveUrlFile":
+          //            {
+          //               "action": "saveUrlFile",
+          //               "fileName": "{basePath}/file1.jpg",
+          //               "url": "http://pic.baidu.com/sample.jpg"
+          //             },
+          if (ac["url"] != null) {
+            await saveUrlFile(exchgValue(ac["url"]),saveFileWithoutExt:exchgValue(ac["fileName"]));
           }
           refreshValue=false;
           break;
@@ -303,16 +309,16 @@ class ScriptEngine {
           //           "method": "get",
           //           "charset": "gbk"
           //         }
-          String htmlUrl = exchgValue(actCfg["url"]) ?? value;
+          String htmlUrl = exchgValue(ac["url"]) ?? value;
           // logger.fine("htmlUrl=$htmlUrl");
-          String body = exchgValue(actCfg["body"]);
+          String body = exchgValue(ac["body"]);
 
           Encoding encoding =
-              "gbk".compareTo(actCfg["charset"]) == 0 ? gbk : utf8;
+              "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
           //todo:queryParameters的使用好像还有问题
           Map<String, dynamic> queryParameters =
-              Map.castFrom(actCfg["queryParameters"] ?? {});
+              Map.castFrom(ac["queryParameters"] ?? {});
           queryParameters.forEach((key, value) {
             if (value is String) {
               queryParameters[key] = Uri.encodeQueryComponent(exchgValue(value),
@@ -320,10 +326,10 @@ class ScriptEngine {
             }
           });
 
-          Map<String, dynamic> headers = Map.castFrom(actCfg["headers"] ?? {});
+          Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
 
           RequestMethod method =
-              "post".compareTo(actCfg["method"] ?? "get") == 0
+              "post".compareTo(ac["method"] ?? "get") == 0
                   ? RequestMethod.post
                   : RequestMethod.get;
 
@@ -348,12 +354,12 @@ class ScriptEngine {
           //               "type": "xpath",
           //               "script": "//p[3]/span[1]/text()"
           //             },
-          switch (actCfg["type"]) {
+          switch (ac["type"]) {
             case "dom":
               var tmp =
-                  HtmlParser(value).parse().querySelector(actCfg["script"]);
+                  HtmlParser(value).parse().querySelector(exchgValue(ac["script"]));
               if (tmp != null) {
-                switch (actCfg["property"] ?? "innerHtml") {
+                switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
                     ret = tmp.innerHtml;
                     break;
@@ -364,13 +370,13 @@ class ScriptEngine {
                     ret = tmp.attributes["content"];
                     break;
                   default:
-                    ret = tmp.attributes[actCfg["property"]] ?? "";
+                    ret = tmp.attributes[ac["property"]] ?? "";
                 }
               } else
                 ret = "";
               break;
             case "xpath":
-              ret = XPath.source(value).query(actCfg["script"])?.get() ?? "";
+              ret = XPath.source(value).query(ac["script"])?.get() ?? "";
               break;
           }
           break;
@@ -381,15 +387,15 @@ class ScriptEngine {
           //             "script": "div.book_list",
           //             "index": 1
           //           }
-          switch (actCfg["type"]) {
+          switch (ac["type"]) {
             case "dom":
               var tmps =
-                  HtmlParser(value).parse().querySelectorAll(actCfg["script"]);
+                  HtmlParser(value).parse().querySelectorAll(ac["script"]);
               var tmp;
               if (tmps?.length ?? 0 > 0)
-                tmp = tmps.elementAt(actCfg["index"] ?? 0);
+                tmp = tmps.elementAt(ac["index"] ?? 0);
               if (tmp != null) {
-                switch (actCfg["property"] ?? "innerHtml") {
+                switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
                     ret = tmp.innerHtml;
                     break;
@@ -400,15 +406,15 @@ class ScriptEngine {
                     ret = tmp.attributes["content"];
                     break;
                   default:
-                    ret = tmp.attributes[actCfg["property"]] ?? "";
+                    ret = tmp.attributes[ac["property"]] ?? "";
                 }
               } else
                 ret = "";
               break;
             case "xpath":
-              var tmps = XPath.source(value).query(actCfg["script"])?.list();
+              var tmps = XPath.source(value).query(ac["script"])?.list();
               if (tmps?.length > 0)
-                ret = tmps.elementAt(actCfg["index"] ?? 0);
+                ret = tmps.elementAt(ac["index"] ?? 0);
               else
                 ret = "";
               break;
@@ -428,18 +434,18 @@ class ScriptEngine {
           //       "falseProcess": []
           //     }
           if (conditionPatch(
-              exchgValue(actCfg["source"]) ?? value, actCfg["exp"],
+              exchgValue(ac["source"]) ?? value, ac["exp"],
               debugId: debugId)) {
-            ret = await singleProcess(value, actCfg["trueProcess"]);
+            ret = await singleProcess(value, ac["trueProcess"]);
           } else {
-            ret = await singleProcess(value, actCfg["falseProcess"]);
+            ret = await singleProcess(value, ac["falseProcess"]);
           }
           break;
         case "break":
           ret = null;
           break;
         case "exit":
-          exit(actCfg["code"] ?? 0);
+          exit(ac["code"] ?? 0);
           break;
         case "callMultiProcess":
           //    {
@@ -447,25 +453,25 @@ class ScriptEngine {
           //       "multiProcess": []
           //    }
           var multiResult =
-              (await multiProcess([value], actCfg["multiProcess"]));
+              (await multiProcess([value], ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
         case "callFunction":
-          if (functions[actCfg["functionName"]] != null)
-            ret = await singleProcess(value, functions[actCfg["functionName"]]);
+          if (functions[ac["functionName"]] != null)
+            ret = await singleProcess(value, functions[ac["functionName"]]);
           else {
             logger
-                .warning("Function ${actCfg["functionName"]} is not found"); //
+                .warning("Function ${ac["functionName"]} is not found"); //
           }
           break;
         default:
-          if (debugMode) logger.fine("Unknow config : [${actCfg.toString()}]");
+          if (debugMode) logger.fine("Unknow config : [${ac.toString()}]");
           break;
       }
     } catch (e) {
       logger.warning(e.toString());
-      logger.warning("--$debugId--💃action($actCfg,$value)");
+      logger.warning("--$debugId--💃action($ac,$value)");
       // throw e;
     }
     if (debugMode && ret!=null) logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
@@ -481,6 +487,7 @@ class ScriptEngine {
     if (procCfg != null) {
       for (var act in procCfg) {
         List<String> preErrorProc=objs;
+        setValue("thisObjs", objs);
         objs = await multiAction(objs, act, debugId: debugId);
         if(objs==null){
           logger.warning("--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
@@ -492,14 +499,14 @@ class ScriptEngine {
     return objs;
   }
 
-  Future<List<String>> multiAction(List<String> value, dynamic actCfg,
+  Future<List<String>> multiAction(List<String> value, dynamic ac,
       {String debugId = ""}) async {
     List<String> ret;
-    if (debugMode) logger.fine("--$debugId--🎾multiAction($actCfg,${shortString(value.toString())})");
+    if (debugMode) logger.fine("--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
     if (debugMode) logger.finest("--$debugId--value : $value)");
-    switch (actCfg["action"]) {
+    switch (ac["action"]) {
       case "multiSelector":
-        switch (actCfg["type"]) {
+        switch (ac["type"]) {
           case "dom":
             //            {
             //               "action": "multiSelector",
@@ -508,7 +515,7 @@ class ScriptEngine {
             //             }
             ret = domList2StrList(HtmlParser(value[0])
                 .parse()
-                .querySelectorAll(actCfg["script"]));
+                .querySelectorAll(ac["script"]));
             break;
           case "xpath":
             //          {
@@ -516,7 +523,7 @@ class ScriptEngine {
             //             "type": "xpath",
             //             "script": "//a/@href"
             //           }
-            ret = XPath.source(value[0]).query(actCfg["script"]).list();
+            ret = XPath.source(value[0]).query(ac["script"]).list();
             break;
         }
         break;
@@ -525,17 +532,20 @@ class ScriptEngine {
         //             "action": "remove",
         //             "index": 0,    //*
         //             "except": 2    //*
+        //             "condition": []    //*
         //           }
-        //          index优先级更高
-        var index = actCfg["index"];
+        //          index优先级更高,except次之,condition最低
+        var index = ac["index"];
         if (index != null) {
           if (index is int) value.removeAt(index);
           if (index is String) {
             if ("first".compareTo(index.toLowerCase()) == 0) value.removeAt(0);
             if ("last".compareTo(index.toLowerCase()) == 0) value.removeLast();
           }
-        } else if (actCfg["except"] != null && actCfg["except"] is int) {
-          value = [value.removeAt(actCfg["except"])];
+        } else if (ac["except"] != null && ac["except"] is int) {
+          value = [value.removeAt(ac["except"])];
+        }else if(ac["condition"]!=null){
+          value.removeWhere((element) => conditionPatch(element,ac["condition"]));
         }
         ret = value;
         break;
@@ -544,7 +554,7 @@ class ScriptEngine {
         //               "action": "sort",
         //               "asc": true
         //             },
-        if (actCfg["asc"] ?? true) {
+        if (ac["asc"] ?? true) {
           value.sort((l, r) => l.compareTo(r));
         } else {
           value.sort((l, r) => r.compareTo(l));
@@ -561,10 +571,10 @@ class ScriptEngine {
         //             "begin": 12,
         //             "end": 20
         //           }
-        if (actCfg["end"] != null) {
-          ret = value.sublist(actCfg["begin"] ?? 0, actCfg["end"]);
+        if (ac["end"] != null) {
+          ret = value.sublist(ac["begin"] ?? 0, ac["end"]);
         } else {
-          ret = value.sublist(actCfg["begin"] ?? 0);
+          ret = value.sublist(ac["begin"] ?? 0);
         }
         break;
       case "saveMultiToFile":
@@ -573,8 +583,8 @@ class ScriptEngine {
         //               "fileName": "{basePath}/file1.txt"
         //             },
         File saveFile;
-        if (actCfg["fileName"] != null) {
-          saveFile = File(exchgValue(actCfg["fileName"]));
+        if (ac["fileName"] != null) {
+          saveFile = File(exchgValue(ac["fileName"]));
           if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
           for (String line in value) {
             saveFile.writeAsStringSync(line,
@@ -605,8 +615,8 @@ class ScriptEngine {
 
         for (String one in value) {
           ///如果单条处理存在则先处理
-          if (actCfg["eachProcess"]?.length > 0)
-            tmpList.add(await singleProcess(one, actCfg["eachProcess"]));
+          if (ac["eachProcess"]?.length > 0)
+            tmpList.add(await singleProcess(one, ac["eachProcess"]));
 
           // /如果分离操作存在则在这里执行处理，否则将单条处理结果加入返回列表
           // if ((actCfg["splitProcess"] ?? []).length > 0) {
@@ -618,7 +628,7 @@ class ScriptEngine {
         ret = tmpList;
         break;
       default:
-        if (debugMode) logger.warning("Unknow config : [${actCfg.toString()}]");
+        if (debugMode) logger.warning("Unknow config : [${ac.toString()}]");
         break;
     }
     if (debugMode) logger.fine("--${debugId ?? ""}--🧩result[${shortString(ret.toString())}]");
@@ -636,17 +646,35 @@ class ScriptEngine {
     return result;
   }
 
-  bool condition(String value, dynamic condExp,
+  bool condition(String value, dynamic ce,
       {bool patchResult, String debugId}) {
-    String exp = exchgValue(condExp["exp"]);
-    switch (condExp["expType"]) {
-      case "compare":
+    String exp = exchgValue(ce["exp"]);
+    switch (ce["expType"]) {
+      case "isNull":
         patchResult = relationAction(
-            patchResult, value.compareTo(exp) == 0, condExp["relation"]);
+            patchResult, value==null, ce["relation"]);
+        break;
+      case "isEmpty":
+        patchResult = relationAction(
+            patchResult, value.isEmpty, ce["relation"]);
+        break;
+      case "compare":
+        // {
+        //       "expType": "compare",
+        //       "exp": "viewthread.php",
+        //       "not": true
+        // }
+        patchResult = relationAction(
+            patchResult, notAction(ce["not"], value.compareTo(exp) == 0), ce["relation"]);
         break;
       case "contain":
+        // {
+        //       "expType": "contain",
+        //       "exp": "viewthread.php",
+        //       "relation": "and"
+        // }
         patchResult = relationAction(
-            patchResult, value.contains(exp), condExp["relation"]);
+            patchResult, notAction(ce["not"], value.contains(exp)), ce["relation"]);
         break;
       case "not": //如果patchResult
         // patchResult = relationAction(patchResult, value.contains(exp),condExp["relation"]);
@@ -657,8 +685,12 @@ class ScriptEngine {
     }
     if (debugMode)
       logger.fine(
-          "--${debugId ?? ""}--⚖️condition($condExp,$value)--🔐result[$patchResult]");
+          "--${debugId ?? ""}--⚖️condition($ce,$value)--🔐result[$patchResult]");
     return patchResult;
+  }
+
+  bool notAction(bool isNot,bool value){
+    return isNot??false?!value:value;
   }
 
   bool relationAction(bool origin, bool value, String relation) {
