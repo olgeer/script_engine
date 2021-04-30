@@ -32,19 +32,19 @@ Future<Response> callWithRetry(
   return resp;
 }
 
-String getCurrentPath(){
+String getCurrentPath() {
   return Directory.current.path;
 }
 
 Future<Response> getUrlFile(String url,
-    {int retry = 3, int seconds = 3,bool debugMode=false}) async {
+    {int retry = 3, int seconds = 3, bool debugMode = false}) async {
   Response tmp;
   Dio dio;
 
   if (dio == null)
     dio = Dio(BaseOptions(
       connectTimeout: 5000,
-      receiveTimeout: 3000,
+      receiveTimeout: 5000,
     ));
 
   if (debugMode)
@@ -52,45 +52,89 @@ Future<Response> getUrlFile(String url,
 
   do {
     try {
-      tmp = await dio.get(url,options: Options(responseType: ResponseType.bytes));
+      tmp = await dio.get(url,
+          options: Options(responseType: ResponseType.bytes));
     } catch (e) {
-      logger.warning("get file error:$e");
-      await Future.delayed(Duration(seconds: seconds));
+      if (e is DioError) {
+        // logger.warning("DioErrorType : ${e.type.toString()}");
+        switch (e.type) {
+          case DioErrorType.receiveTimeout:
+            logger.warning("Receive Timeout! When get file $url . Retry ...");
+            await Future.delayed(Duration(seconds: seconds));
+            break;
+          case DioErrorType.connectTimeout:
+            logger.warning("Connect Timeout! When get file $url . Retry ...");
+            await Future.delayed(Duration(seconds: seconds));
+            break;
+          case DioErrorType.response:
+            switch (e.response.statusCode) {
+              case 404:
+                logger.warning("$url not found. [404]");
+                retry = 0;
+                break;
+              case 500:
+                logger.warning("$url background service error. [500]");
+                retry = 0;
+                break;
+              default:
+                logger.warning(
+                    "StatusCode:[${e.response.statusCode}] get file [$url] error:$e ");
+                await Future.delayed(Duration(seconds: seconds));
+                break;
+            }
+            break;
+          default:
+            logger.warning(
+                "DioErrorType : ${e.type}], get file [$url] error : $e");
+            await Future.delayed(Duration(seconds: seconds));
+        }
+      }
     }
-  } while ((tmp == null || tmp.statusCode != 200) && --retry > 0);
+  } while ((tmp == null || tmp?.statusCode != 200) && --retry > 0);
 
   return tmp?.statusCode == 200 ? tmp : null;
 }
 
 Future<String> saveUrlFile(String url,
-    {String saveFileWithoutExt, int retry = 3, int seconds = 3}) async {
+    {String saveFileWithoutExt,
+    bool overwrite = false,
+    int retry = 3,
+    int seconds = 3}) async {
   Response tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
 
   if (tmpResp != null) {
-    if (tmpResp.data > 0) {
-      List<String> tmpSpile = url.split("//")[1].split("/");
-      String fileExt;
-      if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
-        if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
-          saveFileWithoutExt =
-               getCurrentPath()+ "/" + tmpSpile.last.split(".")[0];
-        }
-        fileExt = tmpSpile.last.split(".")[1];
-      } else {
-        if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
-          saveFileWithoutExt = genKey(lenght: 12);
-        }
-        fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+    // if (tmpResp.data > 0) {
+    List<String> tmpSpile = url.split("//")[1].split("/");
+    String fileExt;
+    if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
+      if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+        saveFileWithoutExt =
+            getCurrentPath() + "/" + tmpSpile.last.split(".")[0];
       }
+      fileExt = tmpSpile.last.split(".")[1];
+    } else {
+      if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+        saveFileWithoutExt = genKey(lenght: 12);
+      }
+      fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+    }
 
-      File urlFile = File("$saveFileWithoutExt.$fileExt");
-      if (urlFile.existsSync()) urlFile.deleteSync();
+    File urlFile = File("$saveFileWithoutExt.$fileExt");
+    if (urlFile.existsSync() && overwrite) {
+      urlFile.deleteSync();
+    }
+    if (!urlFile.existsSync()) {
       urlFile.createSync(recursive: true);
       urlFile.writeAsBytesSync(tmpResp.data.toList(),
           mode: FileMode.write, flush: true);
-      return urlFile.path;
+
+      logger.fine("Save $url to ${urlFile.path} is OK !");
+    } else {
+      logger.fine("Not save $url to ${urlFile.path} because it was existed !");
     }
+    return urlFile.path;
   }
+  logger.info("--Download $url is failed !");
   return null;
 }
 
@@ -103,7 +147,7 @@ Future<String> getHtml(String sUrl,
     int retryTimes = 3,
     int seconds = 5,
     String debugId,
-    bool debugMode = true}) async {
+    bool debugMode = false}) async {
   Dio dio;
   String html;
   // Logger().debug("getHtml-[${debugId ?? ""}]", "Ready getHtml: [$sUrl]");
@@ -216,7 +260,7 @@ void saveFile(String filename, String content,
 }
 
 String shortString(String content, {int limit = 200}) {
-  String ret = content??"";
+  String ret = content ?? "";
   if (ret.length > limit) ret = "${ret.substring(0, limit)} ... ";
   return ret;
 }

@@ -5,7 +5,7 @@ import 'package:script_engine/src/actionCollect.dart';
 import 'package:script_engine/src/logger.dart';
 
 void main(List<String> args) async{
-  initLogger(logLevel: Level.FINER);
+  initLogger(logLevel: Level.INFO);
 
   if(args.isNotEmpty) {
     String scriptPath=args[0];
@@ -13,7 +13,7 @@ void main(List<String> args) async{
 
     String script = readFile(scriptPath);
     if(script!=null) {
-      ScriptEngine se = ScriptEngine(script, debugMode: true);
+      ScriptEngine se = ScriptEngine(script, debugMode: false);
       se.run();
     }else{
       logger.warning("Cannot found script file");

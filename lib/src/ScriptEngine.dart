@@ -51,8 +51,10 @@ class ScriptEngine {
 
     processName = scriptJson["processName"];
 
-    globalValue = Map.castFrom(scriptJson["globalValue"]);
-    reloadGlobalValue();
+    if (scriptJson["globalValue"] != null) {
+      globalValue = Map.castFrom(scriptJson["globalValue"]);
+      reloadGlobalValue();
+    }
 
     functions = Map.castFrom(scriptJson["functionDefine"]);
   }
@@ -86,15 +88,23 @@ class ScriptEngine {
     if (exp != null) {
       while (valueExp.hasMatch(ret)) {
         String valueName = valueExp.firstMatch(ret).group(1);
+        String repValue;
         switch (valueName) {
-          case "currentPath":
-            ret = ret.replaceFirst(valueExp, getCurrentPath());
+          case "system.currentdir":
+            repValue = getCurrentPath();
+            break;
+          case "system.now":
+            repValue = DateTime.now().toString();
+            break;
+          case "system.date":
+            repValue = DateTime.now().toString().split(" ")[0];
             break;
           default:
             if (getValue(valueName) == null) break;
-            ret = ret.replaceFirst(valueExp, getValue(valueName));
+            repValue = getValue(valueName);
             break;
         }
+        if (repValue != null) ret = ret.replaceFirst(valueExp, repValue);
       }
     }
     return ret;
@@ -107,6 +117,7 @@ class ScriptEngine {
     } else {
       tValue.putIfAbsent(key, () => value);
     }
+    logger.finer("Set value($key) to $value");
   }
 
   String removeValue(String key) => tValue.remove(key ?? "");
@@ -117,11 +128,12 @@ class ScriptEngine {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
       for (var act in procCfg ?? []) {
-        String preErrorProc=value;
+        String preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null) {
-          logger.warning("--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
+          logger.warning(
+              "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
         }
       }
@@ -135,7 +147,7 @@ class ScriptEngine {
 
   dynamic action(String value, dynamic ac, {String debugId = ""}) async {
     String ret;
-    bool refreshValue=true;
+    bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
 
@@ -147,7 +159,7 @@ class ScriptEngine {
           //             "value": "url"   //*
           //           }
           logger.info(exchgValue(ac["value"]) ?? value);
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "replace":
           //             {
@@ -181,7 +193,17 @@ class ScriptEngine {
           //               "pattern": "cid=",
           //               "index": 1
           //             },
-          ret = value.split(ac["pattern"])[ac["index"]];
+          if (ac["index"] is int)
+            ret = value.split(ac["pattern"])[ac["index"]];
+          else if (ac["index"] is String) {
+            switch (ac["index"]) {
+              case "first":
+                ret = value.split(ac["pattern"]).first;
+                break;
+              case "last":
+                ret = value.split(ac["pattern"]).last;
+            }
+          }
           break;
         case "trim":
           //            {
@@ -203,7 +225,7 @@ class ScriptEngine {
                 ac["value"] ??
                     await singleProcess(value, ac["valueProcess"] ?? []));
           }
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "getValue":
           //            {
@@ -220,21 +242,21 @@ class ScriptEngine {
           //              "valueName": "pageUrl"
           //            }
           if (ac["valueName"] != null) removeValue(ac["valueName"]);
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "clearEnv":
           //            {
           //              "action": "clearEnv",
           //            }
           clear();
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "push":
           //             {
           //               "action": "push"
           //             },
           tStack.add(value);
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "pop":
           //            {
@@ -247,8 +269,7 @@ class ScriptEngine {
           //               "action": "json",
           //               "keyName": "info"
           //             },
-          if (ac["keyName"] != null)
-            ret = jsonDecode(value)[ac["keyName"]];
+          if (ac["keyName"] != null) ret = jsonDecode(value)[ac["keyName"]];
           break;
         case "readFile":
           //            {
@@ -275,18 +296,21 @@ class ScriptEngine {
             saveFile(exchgValue(ac["fileName"]),
                 exchgValue(ac["saveContent"]) ?? value);
           }
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "saveUrlFile":
           //            {
           //               "action": "saveUrlFile",
           //               "fileName": "{basePath}/file1.jpg",
-          //               "url": "http://pic.baidu.com/sample.jpg"
+          //               "url": "http://pic.baidu.com/sample.jpg",
+          //               "overwrite": true    //* 默认为false
           //             },
           if (ac["url"] != null) {
-            await saveUrlFile(exchgValue(ac["url"]),saveFileWithoutExt:exchgValue(ac["fileName"]));
+            saveUrlFile(exchgValue(ac["url"]),
+                saveFileWithoutExt: exchgValue(ac["fileName"]),
+                overwrite: ac["overwrite"] ?? false);
           }
-          refreshValue=false;
+          refreshValue = false;
           break;
         case "getHtml": //根据htmlUrl获取Html内容，转码后返回给ret
           //        {
@@ -313,8 +337,7 @@ class ScriptEngine {
           // logger.fine("htmlUrl=$htmlUrl");
           String body = exchgValue(ac["body"]);
 
-          Encoding encoding =
-              "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
+          Encoding encoding = "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
           //todo:queryParameters的使用好像还有问题
           Map<String, dynamic> queryParameters =
@@ -328,10 +351,9 @@ class ScriptEngine {
 
           Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
 
-          RequestMethod method =
-              "post".compareTo(ac["method"] ?? "get") == 0
-                  ? RequestMethod.post
-                  : RequestMethod.get;
+          RequestMethod method = "post".compareTo(ac["method"] ?? "get") == 0
+              ? RequestMethod.post
+              : RequestMethod.get;
 
           ret = await getHtml(htmlUrl,
               method: method,
@@ -356,8 +378,9 @@ class ScriptEngine {
           //             },
           switch (ac["type"]) {
             case "dom":
-              var tmp =
-                  HtmlParser(value).parse().querySelector(exchgValue(ac["script"]));
+              var tmp = HtmlParser(value)
+                  .parse()
+                  .querySelector(exchgValue(ac["script"]));
               if (tmp != null) {
                 switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
@@ -392,8 +415,7 @@ class ScriptEngine {
               var tmps =
                   HtmlParser(value).parse().querySelectorAll(ac["script"]);
               var tmp;
-              if (tmps?.length ?? 0 > 0)
-                tmp = tmps.elementAt(ac["index"] ?? 0);
+              if (tmps?.length ?? 0 > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
               if (tmp != null) {
                 switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
@@ -420,6 +442,37 @@ class ScriptEngine {
               break;
           }
           break;
+        case "for":
+          // {
+          //   "action": "for",
+          //   "valueName": "ipage",
+          //   "type": "list",
+          //   "range": [1,10],     //*
+          //   "list": [1,2,4,5,7], //*
+          //   "loopProcess": []
+          // }
+          var loopCfg = ac["loopProcess"];
+          if (loopCfg != null && (ac["list"] != null || ac["range"] != null)) {
+            switch (ac["type"]) {
+              case "list":
+                if (ac["list"] != null) {
+                  for (int i in ac["list"]) {
+                    setValue(ac["valueName"], i);
+                    ret = await singleProcess(value, loopCfg);
+                  }
+                }
+                break;
+              case "range":
+                if (ac["range"] != null) {
+                  for (int i = ac["range"][0]; i < ac["range"][1]; i++) {
+                    setValue(ac["valueName"], i.toString());
+                    ret = await singleProcess(value, loopCfg);
+                  }
+                }
+                break;
+            }
+          }
+          break;
 
         ///条件分支执行
         case "condition":
@@ -433,8 +486,7 @@ class ScriptEngine {
           //       "trueProcess": [],
           //       "falseProcess": []
           //     }
-          if (conditionPatch(
-              exchgValue(ac["source"]) ?? value, ac["exp"],
+          if (conditionPatch(exchgValue(ac["source"]) ?? value, ac["exp"],
               debugId: debugId)) {
             ret = await singleProcess(value, ac["trueProcess"]);
           } else {
@@ -452,17 +504,22 @@ class ScriptEngine {
           //       "action": "callMultiProcess",
           //       "multiProcess": []
           //    }
-          var multiResult =
-              (await multiProcess([value], ac["multiProcess"]));
+          var multiResult = (await multiProcess([value], ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
         case "callFunction":
-          if (functions[ac["functionName"]] != null)
-            ret = await singleProcess(value, functions[ac["functionName"]]);
-          else {
-            logger
-                .warning("Function ${ac["functionName"]} is not found"); //
+          if (functions[ac["functionName"]] != null) {
+            if (ac["parameters"] != null && ac["parameters"] is Map) {
+              Map<String, dynamic> params = Map.castFrom(ac["parameters"]);
+              params.forEach((key, value) {
+                setValue(key, value);
+              });
+            }
+            ret = await singleProcess(
+                value, functions[ac["functionName"]]["process"]);
+          } else {
+            logger.warning("Function ${ac["functionName"]} is not found"); //
           }
           break;
         default:
@@ -474,10 +531,11 @@ class ScriptEngine {
       logger.warning("--$debugId--💃action($ac,$value)");
       // throw e;
     }
-    if (debugMode && ret!=null) logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
+    if (debugMode && ret != null)
+      logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
     // if (debugMode) logger.finest("--$debugId--⚠️️result[$ret]");
 
-    if(!refreshValue)ret=value;
+    if (!refreshValue) ret = value;
 
     return ret;
   }
@@ -486,11 +544,12 @@ class ScriptEngine {
     String debugId = genKey(lenght: 8);
     if (procCfg != null) {
       for (var act in procCfg) {
-        List<String> preErrorProc=objs;
+        List<String> preErrorProc = objs;
         setValue("thisObjs", objs);
         objs = await multiAction(objs, act, debugId: debugId);
-        if(objs==null){
-          logger.warning("--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
+        if (objs == null) {
+          logger.warning(
+              "--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
           break;
         }
       }
@@ -502,7 +561,9 @@ class ScriptEngine {
   Future<List<String>> multiAction(List<String> value, dynamic ac,
       {String debugId = ""}) async {
     List<String> ret;
-    if (debugMode) logger.fine("--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
+    if (debugMode)
+      logger.fine(
+          "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
     if (debugMode) logger.finest("--$debugId--value : $value)");
     switch (ac["action"]) {
       case "multiSelector":
@@ -513,9 +574,8 @@ class ScriptEngine {
             //               "type": "dom",
             //               "script": ".sbintro"
             //             }
-            ret = domList2StrList(HtmlParser(value[0])
-                .parse()
-                .querySelectorAll(ac["script"]));
+            ret = domList2StrList(
+                HtmlParser(value[0]).parse().querySelectorAll(ac["script"]));
             break;
           case "xpath":
             //          {
@@ -544,8 +604,9 @@ class ScriptEngine {
           }
         } else if (ac["except"] != null && ac["except"] is int) {
           value = [value.removeAt(ac["except"])];
-        }else if(ac["condition"]!=null){
-          value.removeWhere((element) => conditionPatch(element,ac["condition"]));
+        } else if (ac["condition"] != null) {
+          value.removeWhere(
+              (element) => conditionPatch(element, ac["condition"]));
         }
         ret = value;
         break;
@@ -631,7 +692,9 @@ class ScriptEngine {
         if (debugMode) logger.warning("Unknow config : [${ac.toString()}]");
         break;
     }
-    if (debugMode) logger.fine("--${debugId ?? ""}--🧩result[${shortString(ret.toString())}]");
+    if (debugMode)
+      logger
+          .fine("--${debugId ?? ""}--🧩result[${shortString(ret.toString())}]");
     // if (debugMode) logger.finest("--${debugId ?? ""}--🧩result[$ret]");
     return ret;
   }
@@ -646,17 +709,32 @@ class ScriptEngine {
     return result;
   }
 
-  bool condition(String value, dynamic ce,
-      {bool patchResult, String debugId}) {
-    String exp = exchgValue(ce["exp"]);
+  bool condition(String value, dynamic ce, {bool patchResult, String debugId}) {
+    var exp = ce["exp"];
+    if(exp is String){
+      exp=exchgValue(exp);
+    }else if(exp is List){
+      for(int i=0;i<exp.length;i++){
+        exp[i]=exchgValue(exp[i]);
+      }
+    }
     switch (ce["expType"]) {
       case "isNull":
-        patchResult = relationAction(
-            patchResult, value==null, ce["relation"]);
+        patchResult =
+            relationAction(patchResult, value == null, ce["relation"]);
         break;
       case "isEmpty":
-        patchResult = relationAction(
-            patchResult, value.isEmpty, ce["relation"]);
+        patchResult =
+            relationAction(patchResult, value.isEmpty, ce["relation"]);
+        break;
+      case "in":
+        // {
+        //       "expType": "in",
+        //       "exp": "jpg,png,jpeg,gif,bmp",
+        //       "not": true
+        // }
+        patchResult =
+            relationAction(patchResult, exp.split(",").contains(value), ce["relation"]);
         break;
       case "compare":
         // {
@@ -664,8 +742,8 @@ class ScriptEngine {
         //       "exp": "viewthread.php",
         //       "not": true
         // }
-        patchResult = relationAction(
-            patchResult, notAction(ce["not"], value.compareTo(exp) == 0), ce["relation"]);
+        patchResult = relationAction(patchResult,
+            notAction(ce["not"], value.compareTo(exp) == 0), ce["relation"]);
         break;
       case "contain":
         // {
@@ -673,8 +751,17 @@ class ScriptEngine {
         //       "exp": "viewthread.php",
         //       "relation": "and"
         // }
-        patchResult = relationAction(
-            patchResult, notAction(ce["not"], value.contains(exp)), ce["relation"]);
+        if(exp is String){
+          patchResult = relationAction(patchResult,
+            notAction(ce["not"], value.contains(exp)), ce["relation"]);
+        }else if(exp is List){
+          bool listResult=false;
+          exp.forEach((element) {
+            listResult=value.contains(element) ||listResult;
+          });
+          patchResult = relationAction(patchResult,
+              notAction(ce["not"], listResult), ce["relation"]);
+        }
         break;
       case "not": //如果patchResult
         // patchResult = relationAction(patchResult, value.contains(exp),condExp["relation"]);
@@ -689,8 +776,8 @@ class ScriptEngine {
     return patchResult;
   }
 
-  bool notAction(bool isNot,bool value){
-    return isNot??false?!value:value;
+  bool notAction(bool isNot, bool value) {
+    return isNot ?? false ? !value : value;
   }
 
   bool relationAction(bool origin, bool value, String relation) {
