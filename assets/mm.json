@@ -5,160 +5,211 @@
     "encoding": "gbk"
   },
   "functionDefine": {
-    "checkTitle": [
-      {
-        "action": "selector",
-        "type": "dom",
-        "script": "title"
-      },
-      {
-        "action": "condition",
-        "exp": [
-          {
-            "expType": "contain",
-            "exp": "搜索结果"
+    "getPage": {
+      "parameters": ["page"],
+      "process": [
+        {
+          "action": "getHtml",
+          "url": "{url}/forumdisplay.php",
+          "queryParameters": {
+            "fid": 59,
+            "page": "{page}"
           },
-          {
-            "expType": "contain",
-            "exp": "天下书库",
-            "relation": "and"
-          }
-        ],
-        "trueProcess": [
-          {
-            "action": "print",
-            "value": "Title匹配成功！"
-          }
-        ],
-        "falseProcess": [
-          {
-            "action": "print"
-          },
-          {
-            "action": "exit",
-            "code": 1
-          }
-        ]
-      }
-    ],
-    "getFirstPage": [
-      {
-        "action": "getHtml",
-        "url": "{url}/forumdisplay.php",
-        "queryParameters": {
-          "fid": 59
+          "method": "get",
+          "charset": "gbk"
         },
-        "method": "get",
-        "charset": "gbk"
-      },
-      {
-        "action": "selector",
-        "type": "dom",
-        "script": "[name=\"moderate\"]"
-      },
-      {
-        "action": "callMultiProcess",
-        "multiProcess": [
-          {
-            "action": "multiSelector",
-            "type": "xpath",
-            "script": "//a/@href"
-          },
-          {
-            "action": "foreach",
-            "eachProcess": [
-              {
-                "action": "condition",
-                "exp": [
-                  {
-                    "expType": "contain",
-                    "exp": "viewthread.php"
-                  },
-                  {
-                    "expType": "contain",
-                    "exp": "extra",
-                    "not": true,
-                    "relation": "and"
-                  }
-                ],
-                "trueProcess": [
-                  {
-                    "action": "concat",
-                    "front": "{url}/"
-                  },
-                  {
-                    "action": "print"
-                  }
-                ],
-                "falseProcess": [
-                  {
-                    "action": "break"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "action": "remove",
-            "condition": [
-              {
-                "expType": "isNull"
-              }
-            ]
-          },
-          {
-            "action": "foreach",
-            "eachProcess": [
-              {
-                "action": "callFunction",
-                "functionName": "getThread"
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "getThread": [
-      {
-        "action": "push"
-      },
-      {
-        "action": "split",
-        "pattern": "tid=",
-        "index": 1
-      },
-      {
-        "action": "setValue",
-        "valueName": "tid"
-      },
-      {
-        "action": "pop"
-      },
-      {
-        "action": "getHtml",
-        "url": "{this}",
-        "method": "get",
-        "charset": "gbk"
-      },
-      {
-        "action": "selector",
-        "type": "dom",
-        "script": "form"
-      },
-      {
-        "action": "print"
-      },
-      {
-        "action": "callFunction",
-        "functionName": "downloadPic"
-      }
-    ],
-    "downloadPic": []
+        {
+          "action": "selector",
+          "type": "dom",
+          "script": "[name=\"moderate\"]"
+        },
+        {
+          "action": "callMultiProcess",
+          "multiProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//a/@href"
+            },
+            {
+              "action": "foreach",
+              "eachProcess": [
+                {
+                  "action": "condition",
+                  "exp": [
+                    {
+                      "expType": "contain",
+                      "exp": "viewthread.php"
+                    },
+                    {
+                      "expType": "contain",
+                      "exp": "extra",
+                      "not": true,
+                      "relation": "and"
+                    }
+                  ],
+                  "trueProcess": [
+                    {
+                      "action": "concat",
+                      "front": "{url}/"
+                    },
+                    {
+                      "action": "print"
+                    }
+                  ],
+                  "falseProcess": [
+                    {
+                      "action": "break"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "action": "remove",
+              "condition": [
+                {
+                  "expType": "isNull"
+                }
+              ]
+            },
+            {
+              "action": "foreach",
+              "eachProcess": [
+                {
+                  "action": "callFunction",
+                  "functionName": "getThread"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "getThread": {
+      "process": [
+        {
+          "action": "push"
+        },
+        {
+          "action": "split",
+          "pattern": "tid=",
+          "index": 1
+        },
+        {
+          "action": "setValue",
+          "valueName": "tid"
+        },
+        {
+          "action": "pop"
+        },
+        {
+          "action": "getHtml",
+          "url": "{this}",
+          "method": "get",
+          "charset": "gbk"
+        },
+        {
+          "action": "selector",
+          "type": "dom",
+          "script": "form"
+        },
+        {
+          "action": "replace",
+          "from": "<br[ |/]*>",
+          "to": "\n"
+        },
+        {
+          "action": "replace",
+          "from": "<input[^>]*>",
+          "to": ""
+        },
+        {
+          "action": "callMultiProcess",
+          "multiProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//img/@src"
+            },
+            {
+              "action": "remove",
+              "condition": [
+                {
+                  "expType": "contain",
+                  "exp": "http",
+                  "not": true
+                },
+                {
+                  "expType": "contain",
+                  "exp": ["jpg","gif","bmp","png"],
+                  "not": true,
+                  "relation": "or"
+                }
+              ]
+            },
+            {
+              "action": "foreach",
+              "eachProcess": [
+                {
+                  "action": "print",
+                  "value": "正在下载{this}"
+                },
+                {
+                  "action": "callFunction",
+                  "functionName": "downloadPic"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "downloadPic": {
+      "process": [
+        {
+          "action": "push"
+        },
+        {
+          "action": "split",
+          "pattern": "/",
+          "index": "last"
+        },
+        {
+          "action": "split",
+          "pattern": ".",
+          "index": "first"
+        },
+        {
+          "action": "setValue",
+          "valueName": "picname"
+        },
+        {
+          "action": "pop"
+        },
+        {
+          "action": "saveUrlFile",
+          "url": "{this}",
+          "fileName": "{system.currentdir}/mm/{system.date}-{tid}/{picname}"
+        }
+      ]
+    }
   },
   "beginSegment": [
     {
-      "action": "callFunction",
-      "functionName": "getFirstPage"
+      "action": "for",
+      "valueName": "ipage",
+      "type": "list",
+      "list": [11,12,13,14,15],
+      "loopProcess": [
+        {
+          "action": "callFunction",
+          "functionName": "getPage",
+          "parameters": {
+            "page": "{ipage}"
+          }
+        }
+      ]
     }
   ]
 }

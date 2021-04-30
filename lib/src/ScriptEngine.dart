@@ -25,7 +25,7 @@ class ScriptEngine {
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
   ScriptEngine(dynamic scriptSource, {this.debugMode = false}) {
-    assert(scriptSource != null);
+    // assert(scriptSource != null);
     initScript(scriptSource);
   }
 
@@ -44,19 +44,19 @@ class ScriptEngine {
     }
     scriptJson = json.decode(script ?? "{}");
 
-    if (scriptJson["beginSegment"] == null) {
-      logger.warning("找不到[beginSegment]段落，执行结束！");
-      return;
-    }
+    // if (scriptJson["beginSegment"] == null) {
+    //   logger.warning("找不到[beginSegment]段落，执行结束！");
+    //   return;
+    // }
 
-    processName = scriptJson["processName"];
+    processName = scriptJson["processName"]??"DefaultProcess";
 
     if (scriptJson["globalValue"] != null) {
       globalValue = Map.castFrom(scriptJson["globalValue"]);
       reloadGlobalValue();
     }
 
-    functions = Map.castFrom(scriptJson["functionDefine"]);
+    functions = Map.castFrom(scriptJson["functionDefine"]??{});
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
@@ -100,8 +100,12 @@ class ScriptEngine {
             repValue = DateTime.now().toString().split(" ")[0];
             break;
           default:
-            if (getValue(valueName) == null) break;
-            repValue = getValue(valueName);
+            var v=getValue(valueName);
+            if (v == null) break;
+            else if(v is String){
+              repValue = v;
+            }else
+              repValue = v.toString();
             break;
         }
         if (repValue != null) ret = ret.replaceFirst(valueExp, repValue);
