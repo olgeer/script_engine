@@ -659,28 +659,24 @@ class ScriptEngine {
         }
         break;
       case "foreach":
-        //        {
-        //           "action": "foreach",
-        //           "preProcess": [
-        //             {
-        //               "action": "selector",
-        //               "type": "dom",
-        //               "script": ".xs-list"
-        //             }
-        //           ],
-        //           "splitProcess": [
-        //             {
-        //               "action": "multiSelector",
-        //               "type": "xpath",
-        //               "script": "//ul/li"
-        //             }
-        //           ]
-        //         }
+        // {
+        //   "action": "foreach",
+        //   "eachProcess": [
+        //     {
+        //     "action": "print",
+        //     "value": "正在下载{this}"
+        //     },
+        //     {
+        //     "action": "callFunction",
+        //     "functionName": "downloadPic"
+        //     }
+        //   ]
+        // }
         List<String> tmpList = [];
 
         for (String one in value) {
           ///如果单条处理存在则先处理
-          if (ac["eachProcess"]?.length > 0)
+          if (ac["eachProcess"]?.length??0 > 0)
             tmpList.add(await singleProcess(one, ac["eachProcess"]));
 
           // /如果分离操作存在则在这里执行处理，否则将单条处理结果加入返回列表
