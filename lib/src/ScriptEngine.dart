@@ -688,6 +688,41 @@ class ScriptEngine {
         }
         ret = tmpList;
         break;
+      case "foreach2":
+      //        {
+      //           "action": "foreach2",    //旧版本兼容
+      //           "preProcess": [
+      //             {
+      //               "action": "selector",
+      //               "type": "dom",
+      //               "script": ".xs-list"
+      //             }
+      //           ],
+      //           "splitProcess": [
+      //             {
+      //               "action": "multiSelector",
+      //               "type": "xpath",
+      //               "script": "//ul/li"
+      //             }
+      //           ]
+      //         }
+        List<String> tmpList = [];
+
+        for (String one in value) {
+          ///如果单条处理存在则先处理
+          if ((ac["preProcess"] ?? []).length > 0)
+            one = await singleProcess(one, ac["preProcess"]);
+
+          ///如果分离操作存在则在这里执行处理，否则将单条处理结果加入返回列表
+          if ((ac["splitProcess"] ?? []).length > 0) {
+            tmpList.addAll(await multiProcess([one], ac["splitProcess"]));
+          } else {
+            tmpList.add(one);
+          }
+        }
+
+        ret = tmpList;
+        break;
       default:
         if (debugMode) logger.warning("Unknow config : [${ac.toString()}]");
         break;
