@@ -181,7 +181,7 @@ Future<String> getHtml(String sUrl,
                   data: body);
             }
           } catch (e) {
-            if (e is DioError && e.response.statusCode == 302) {
+            if (e is DioError && e.response?.statusCode == 302) {
               try {
                 String newUrl =
                     "${getDomain(sUrl)}${e.response.headers["location"].first}";

@@ -54,7 +54,12 @@ class ScriptEngine {
     if (scriptSrc is String) {
       script = scriptSrc;
     }
-    scriptJson = json.decode(script ?? "{}");
+    try {
+      scriptJson = json.decode(script ?? "{}");
+    } catch (e) {
+      print(e);
+      scriptJson={};
+    }
 
     // if (scriptJson["beginSegment"] == null) {
     //   logger.warning("找不到[beginSegment]段落，执行结束！");
@@ -158,8 +163,10 @@ class ScriptEngine {
       // tStack.clear();
       setValue(SINGLERESULT, value);
       return value;
-    } else
+    } else{
+      logger.warning("----[procCfg is null,Abort this singleProcess! Please check !");
       return null;
+    }
   }
 
   Future<String> action(String value, dynamic ac, {String debugId = ""}) async {
