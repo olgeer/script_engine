@@ -100,42 +100,43 @@ Future<String> saveUrlFile(String url,
     bool overwrite = false,
     int retry = 3,
     int seconds = 3}) async {
-  Response tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
-
-  if (tmpResp != null) {
-    // if (tmpResp.data > 0) {
-    List<String> tmpSpile = url.split("//")[1].split("/");
-    String fileExt;
-    if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
-      if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
-        saveFileWithoutExt =
-            getCurrentPath() + "/" + tmpSpile.last.split(".")[0];
-      }
-      fileExt = tmpSpile.last.split(".")[1];
-    } else {
-      if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
-        saveFileWithoutExt = genKey(lenght: 12);
-      }
-      fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+  // if (tmpResp.data > 0) {
+  List<String> tmpSpile = url.split("//")[1].split("/");
+  String fileExt;
+  if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
+    if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+      saveFileWithoutExt = getCurrentPath() + "/" + tmpSpile.last.split(".")[0];
     }
-
-    File urlFile = File("$saveFileWithoutExt.$fileExt");
-    if (urlFile.existsSync() && overwrite) {
-      urlFile.deleteSync();
+    fileExt = tmpSpile.last.split(".")[1];
+  } else {
+    if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
+      saveFileWithoutExt = genKey(lenght: 12);
     }
-    if (!urlFile.existsSync()) {
+  }
+
+  File urlFile = File("$saveFileWithoutExt.${fileExt ?? ""}");
+  if (urlFile.existsSync() && overwrite) {
+    urlFile.deleteSync();
+  }
+  if (!urlFile.existsSync()) {
+    Response tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
+    if (tmpResp != null) {
+      if (fileExt == null) {
+        fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+      }
       urlFile.createSync(recursive: true);
       urlFile.writeAsBytesSync(tmpResp.data.toList(),
           mode: FileMode.write, flush: true);
 
       logger.fine("Save $url to ${urlFile.path} is OK !");
     } else {
-      logger.fine("Not save $url to ${urlFile.path} because it was existed !");
+      logger.warning("--Download $url is failed !");
+      return null;
     }
-    return urlFile.path;
+  } else {
+    logger.fine("Not save $url to ${urlFile.path} because it was existed !");
   }
-  logger.info("--Download $url is failed !");
-  return null;
+  return urlFile.path;
 }
 
 Future<String> getHtml(String sUrl,

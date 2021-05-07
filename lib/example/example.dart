@@ -14,7 +14,7 @@ void main(List<String> args) async{
     Uri script = Uri.file(scriptPath);
     // String script = readFile(scriptPath);
     if(script!=null) {
-      ScriptEngine se = ScriptEngine(script, debugMode: true);
+      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: true);
       se.run();
     }else{
       logger.warning("Cannot found script file");
@@ -38,4 +38,18 @@ void main(List<String> args) async{
 void showUsage(){
   logger.config("Usage : Cmd (scriptPath)");
   logger.info("Try again.");
+}
+
+Future<String> myAction(String value, dynamic ac,
+{String debugId, bool debugMode})async{
+  String ret;
+  switch(ac["action"]??""){
+    case "lampFlash":
+      print("lampFlash");
+      ret=value;
+      break;
+    default:
+      print("Unkown action");
+  }
+  return ret;
 }

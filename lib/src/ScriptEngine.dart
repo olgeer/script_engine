@@ -7,6 +7,11 @@ import 'package:fast_gbk/fast_gbk.dart';
 import 'actionCollect.dart';
 import 'HtmlCodec.dart';
 
+typedef singleAction = Future<String> Function(String value, dynamic ac,
+    {String debugId, bool debugMode});
+typedef multiAction = Future<List<String>>
+    Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
+
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
   List<String> tStack = []; //配置运行时堆栈
@@ -17,14 +22,22 @@ class ScriptEngine {
   String script;
   Map<String, dynamic> scriptJson;
   String processName;
+
+  singleAction extendSingleAction;
+  multiAction extendMultiAction;
+
   final Logger logger = Logger("ScriptEngine");
 
   final String MULTIRESULT = "multiResult";
   final String SINGLERESULT = "singleResult";
+  final String RETURNCODE = "returnCode";
 
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
-  ScriptEngine(dynamic scriptSource, {this.debugMode = false}) {
+  ScriptEngine(dynamic scriptSource,
+      {this.extendSingleAction,
+      this.extendMultiAction,
+      this.debugMode = false}) {
     // assert(scriptSource != null);
     initScript(scriptSource);
   }
@@ -32,7 +45,7 @@ class ScriptEngine {
   void initScript(dynamic scriptSrc) async {
     if (scriptSrc is Uri) {
       if (scriptSrc.isScheme("file")) script = readFile(scriptSrc.path);
-      if (scriptSrc.isScheme("https")||scriptSrc.isScheme("http"))
+      if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
         script = await getHtml(scriptSrc.toString());
     }
     if (scriptSrc is File) {
@@ -48,14 +61,14 @@ class ScriptEngine {
     //   return;
     // }
 
-    processName = scriptJson["processName"]??"DefaultProcess";
+    processName = scriptJson["processName"] ?? "DefaultProcess";
 
     if (scriptJson["globalValue"] != null) {
       globalValue = Map.castFrom(scriptJson["globalValue"]);
       reloadGlobalValue();
     }
 
-    functions = Map.castFrom(scriptJson["functionDefine"]??{});
+    functions = Map.castFrom(scriptJson["functionDefine"] ?? {});
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
@@ -99,11 +112,12 @@ class ScriptEngine {
             repValue = DateTime.now().toString().split(" ")[0];
             break;
           default:
-            var v=getValue(valueName);
-            if (v == null) break;
-            else if(v is String){
+            var v = getValue(valueName);
+            if (v == null)
+              break;
+            else if (v is String) {
               repValue = v;
-            }else
+            } else
               repValue = v.toString();
             break;
         }
@@ -134,7 +148,7 @@ class ScriptEngine {
         String preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
-        if (value == null && (getValue("returnCode")??1)!=0) {
+        if (value == null && (getValue(RETURNCODE) ?? 1) != 0) {
           logger.warning(
               "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
@@ -148,7 +162,7 @@ class ScriptEngine {
       return null;
   }
 
-  Future action(String value, dynamic ac, {String debugId = ""}) async {
+  Future<String> action(String value, dynamic ac, {String debugId = ""}) async {
     String ret;
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
@@ -367,7 +381,8 @@ class ScriptEngine {
               body: body,
               queryParameters: queryParameters,
               debugId: debugId,
-              debugMode: debugMode && Logger.root.level.value>Level.FINE.value);
+              debugMode:
+                  debugMode && Logger.root.level.value > Level.FINE.value);
           break;
         case "selector":
           //            {
@@ -440,7 +455,7 @@ class ScriptEngine {
               break;
             case "xpath":
               var tmps = XPath.source(value).query(ac["script"])?.list();
-              if (tmps?.length > 0)
+              if ((tmps?.length ?? 0) > 0)
                 ret = tmps.elementAt(ac["index"] ?? 0);
               else
                 ret = "";
@@ -499,7 +514,7 @@ class ScriptEngine {
           }
           break;
         case "break":
-          setValue("returnCode", 0);
+          setValue(RETURNCODE, 0);
           ret = null;
           break;
         case "exit":
@@ -529,7 +544,11 @@ class ScriptEngine {
           }
           break;
         default:
-          if (debugMode) logger.fine("Unknow config : [${ac.toString()}]");
+          if (extendSingleAction != null) {
+            ret = await extendSingleAction(value, ac,
+                debugId: debugId, debugMode: debugMode);
+          } else if (debugMode)
+            logger.fine("Unknow config : [${ac.toString()}]");
           break;
       }
     } catch (e) {
@@ -552,7 +571,7 @@ class ScriptEngine {
       for (var act in procCfg) {
         List<String> preErrorProc = objs;
         setValue("thisObjs", objs);
-        objs = await multiAction(objs, act, debugId: debugId);
+        objs = await mAction(objs, act, debugId: debugId);
         if (objs == null) {
           logger.warning(
               "--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
@@ -564,7 +583,7 @@ class ScriptEngine {
     return objs;
   }
 
-  Future<List<String>> multiAction(List<String> value, dynamic ac,
+  Future<List<String>> mAction(List<String> value, dynamic ac,
       {String debugId = ""}) async {
     List<String> ret;
     if (debugMode)
@@ -678,7 +697,7 @@ class ScriptEngine {
 
         for (String one in value) {
           ///如果单条处理存在则先处理
-          if ((ac["eachProcess"]?.length??0) > 0)
+          if ((ac["eachProcess"]?.length ?? 0) > 0)
             tmpList.add(await singleProcess(one, ac["eachProcess"]));
 
           // /如果分离操作存在则在这里执行处理，否则将单条处理结果加入返回列表
@@ -691,23 +710,23 @@ class ScriptEngine {
         ret = tmpList;
         break;
       case "foreach2":
-      //        {
-      //           "action": "foreach2",    //旧版本兼容
-      //           "preProcess": [
-      //             {
-      //               "action": "selector",
-      //               "type": "dom",
-      //               "script": ".xs-list"
-      //             }
-      //           ],
-      //           "splitProcess": [
-      //             {
-      //               "action": "multiSelector",
-      //               "type": "xpath",
-      //               "script": "//ul/li"
-      //             }
-      //           ]
-      //         }
+        //        {
+        //           "action": "foreach2",    //旧版本兼容
+        //           "preProcess": [
+        //             {
+        //               "action": "selector",
+        //               "type": "dom",
+        //               "script": ".xs-list"
+        //             }
+        //           ],
+        //           "splitProcess": [
+        //             {
+        //               "action": "multiSelector",
+        //               "type": "xpath",
+        //               "script": "//ul/li"
+        //             }
+        //           ]
+        //         }
         List<String> tmpList = [];
 
         for (String one in value) {
@@ -726,7 +745,11 @@ class ScriptEngine {
         ret = tmpList;
         break;
       default:
-        if (debugMode) logger.warning("Unknow config : [${ac.toString()}]");
+        if (extendSingleAction != null) {
+          ret = await extendMultiAction(value, ac,
+              debugId: debugId, debugMode: debugMode);
+        } else if (debugMode)
+          logger.warning("Unknow config : [${ac.toString()}]");
         break;
     }
     if (debugMode)
@@ -748,11 +771,11 @@ class ScriptEngine {
 
   bool condition(String value, dynamic ce, {bool patchResult, String debugId}) {
     var exp = ce["exp"];
-    if(exp is String){
-      exp=exchgValue(exp);
-    }else if(exp is List){
-      for(int i=0;i<exp.length;i++){
-        exp[i]=exchgValue(exp[i]);
+    if (exp is String) {
+      exp = exchgValue(exp);
+    } else if (exp is List) {
+      for (int i = 0; i < exp.length; i++) {
+        exp[i] = exchgValue(exp[i]);
       }
     }
     switch (ce["expType"]) {
@@ -770,8 +793,8 @@ class ScriptEngine {
         //       "exp": "jpg,png,jpeg,gif,bmp",
         //       "not": true
         // }
-        patchResult =
-            relationAction(patchResult, exp.split(",").contains(value), ce["relation"]);
+        patchResult = relationAction(
+            patchResult, exp.split(",").contains(value), ce["relation"]);
         break;
       case "compare":
         // {
@@ -788,16 +811,16 @@ class ScriptEngine {
         //       "exp": "viewthread.php",
         //       "relation": "and"
         // }
-        if(exp is String){
+        if (exp is String) {
           patchResult = relationAction(patchResult,
-            notAction(ce["not"], value.contains(exp)), ce["relation"]);
-        }else if(exp is List){
-          bool listResult=false;
+              notAction(ce["not"], value.contains(exp)), ce["relation"]);
+        } else if (exp is List) {
+          bool listResult = false;
           exp.forEach((element) {
-            listResult=value.contains(element) ||listResult;
+            listResult = value.contains(element) || listResult;
           });
-          patchResult = relationAction(patchResult,
-              notAction(ce["not"], listResult), ce["relation"]);
+          patchResult = relationAction(
+              patchResult, notAction(ce["not"], listResult), ce["relation"]);
         }
         break;
       case "not": //如果patchResult

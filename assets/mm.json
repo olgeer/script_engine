@@ -162,7 +162,7 @@
                 },
                 {
                   "expType": "contain",
-                  "exp": ["jpg","gif","bmp","png"],
+                  "exp": ["jpg","gif","bmp","png","jpeg"],
                   "not": true,
                   "relation": "or"
                 }
@@ -228,6 +228,12 @@
           "parameters": {
             "page": "{ipage}"
           }
+        },
+        {
+          "action": "lampFlash"
+        },
+        {
+          "action": "unkown"
         }
       ]
     }
