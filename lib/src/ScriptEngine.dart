@@ -32,9 +32,8 @@ class ScriptEngine {
   void initScript(dynamic scriptSrc) async {
     if (scriptSrc is Uri) {
       if (scriptSrc.isScheme("file")) script = readFile(scriptSrc.path);
-      if (scriptSrc.isScheme("https"))
+      if (scriptSrc.isScheme("https")||scriptSrc.isScheme("http"))
         script = await getHtml(scriptSrc.toString());
-      // if(scriptSrc.isScheme("asset"))script = await rootBundle.loadString(scriptSrc.path);
     }
     if (scriptSrc is File) {
       script = readFile(scriptSrc);
@@ -135,7 +134,7 @@ class ScriptEngine {
         String preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
-        if (value == null) {
+        if (value == null && (getValue("returnCode")??1)!=0) {
           logger.warning(
               "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
@@ -149,7 +148,7 @@ class ScriptEngine {
       return null;
   }
 
-  dynamic action(String value, dynamic ac, {String debugId = ""}) async {
+  Future action(String value, dynamic ac, {String debugId = ""}) async {
     String ret;
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
@@ -206,6 +205,9 @@ class ScriptEngine {
                 break;
               case "last":
                 ret = value.split(ac["pattern"]).last;
+                break;
+              default:
+                break;
             }
           }
           break;
@@ -343,7 +345,6 @@ class ScriptEngine {
 
           Encoding encoding = "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
-          //todo:queryParameters的使用好像还有问题
           Map<String, dynamic> queryParameters =
               Map.castFrom(ac["queryParameters"] ?? {});
           queryParameters.forEach((key, value) {
@@ -366,7 +367,7 @@ class ScriptEngine {
               body: body,
               queryParameters: queryParameters,
               debugId: debugId,
-              debugMode: debugMode);
+              debugMode: debugMode && Logger.root.level.value>Level.FINE.value);
           break;
         case "selector":
           //            {
@@ -498,6 +499,7 @@ class ScriptEngine {
           }
           break;
         case "break":
+          setValue("returnCode", 0);
           ret = null;
           break;
         case "exit":
@@ -676,7 +678,7 @@ class ScriptEngine {
 
         for (String one in value) {
           ///如果单条处理存在则先处理
-          if (ac["eachProcess"]?.length??0 > 0)
+          if ((ac["eachProcess"]?.length??0) > 0)
             tmpList.add(await singleProcess(one, ac["eachProcess"]));
 
           // /如果分离操作存在则在这里执行处理，否则将单条处理结果加入返回列表

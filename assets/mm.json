@@ -110,6 +110,26 @@
           "charset": "gbk"
         },
         {
+          "action": "push"
+        },
+        {
+          "action": "selector",
+          "type": "dom",
+          "script": "title"
+        },
+        {
+          "action": "split",
+          "pattern": " ",
+          "index": 0
+        },
+        {
+          "action": "setValue",
+          "valueName": "title"
+        },
+        {
+          "action": "pop"
+        },
+        {
           "action": "selector",
           "type": "dom",
           "script": "form"
@@ -190,7 +210,7 @@
         {
           "action": "saveUrlFile",
           "url": "{this}",
-          "fileName": "{system.currentdir}/mm/{system.date}-{tid}/{picname}"
+          "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
         }
       ]
     }
@@ -200,7 +220,7 @@
       "action": "for",
       "valueName": "ipage",
       "type": "list",
-      "list": [11,12,13,14,15],
+      "list": [1,2],
       "loopProcess": [
         {
           "action": "callFunction",
