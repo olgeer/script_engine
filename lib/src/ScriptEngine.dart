@@ -11,7 +11,7 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
     {String debugId, bool debugMode});
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
-typedef valueProvider = String Function(String exp);
+typedef valueProvider = Future<String> Function(String exp);
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -129,7 +129,7 @@ class ScriptEngine {
             var v = getValue(valueName);
             if (v == null) {
               if (extendValueProvide != null)
-                repValue = extendValueProvide(valueName);
+                repValue = await extendValueProvide(valueName);
               break;
             } else if (v is String) {
               repValue = v;
@@ -319,7 +319,7 @@ class ScriptEngine {
           if (ac["fileName"] != null) {
             String fileContent = readFile(exchgValue(ac["fileName"]));
             if (ac["toValue"] != null) {
-              setValue(exchgValue(ac["toValue"]), fileContent);
+              setValue(await exchgValue(ac["toValue"]), fileContent);
               ret = value;
             } else
               ret = fileContent;
@@ -332,7 +332,7 @@ class ScriptEngine {
           //               "saveContent": "{title}\n\r{content}"
           //             },
           if (ac["fileName"] != null) {
-            saveFile(exchgValue(ac["fileName"]),
+            saveFile(await exchgValue(ac["fileName"]),
                 exchgValue(ac["saveContent"]) ?? value);
           }
           refreshValue = false;
@@ -345,8 +345,8 @@ class ScriptEngine {
           //               "overwrite": true    //* 默认为false
           //             },
           if (ac["url"] != null) {
-            saveUrlFile(exchgValue(ac["url"]),
-                saveFileWithoutExt: exchgValue(ac["fileName"]),
+            saveUrlFile(await exchgValue(ac["url"]),
+                saveFileWithoutExt: await exchgValue(ac["fileName"]),
                 overwrite: ac["overwrite"] ?? false);
           }
           refreshValue = false;
@@ -374,15 +374,15 @@ class ScriptEngine {
           //         }
           String htmlUrl = exchgValue(ac["url"]) ?? value;
           // logger.fine("htmlUrl=$htmlUrl");
-          String body = exchgValue(ac["body"]);
+          String body = await exchgValue(ac["body"]);
 
           Encoding encoding = "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
           Map<String, dynamic> queryParameters =
               Map.castFrom(ac["queryParameters"] ?? {});
-          queryParameters.forEach((key, value) {
+          queryParameters.forEach((key, value) async{
             if (value is String) {
-              queryParameters[key] = Uri.encodeQueryComponent(exchgValue(value),
+              queryParameters[key] = Uri.encodeQueryComponent(await exchgValue(value),
                   encoding: encoding);
             }
           });
@@ -419,7 +419,7 @@ class ScriptEngine {
             case "dom":
               var tmp = HtmlParser(value)
                   .parse()
-                  .querySelector(exchgValue(ac["script"]));
+                  .querySelector(await exchgValue(ac["script"]));
               if (tmp != null) {
                 switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
@@ -689,7 +689,7 @@ class ScriptEngine {
         //             },
         File saveFile;
         if (ac["fileName"] != null) {
-          saveFile = File(exchgValue(ac["fileName"]));
+          saveFile = File(await exchgValue(ac["fileName"]));
           if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
           for (String line in value) {
             saveFile.writeAsStringSync(line,
