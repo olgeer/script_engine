@@ -101,7 +101,7 @@ class ScriptEngine {
     });
   }
 
-  String exchgValue(String exp) {
+  Future<String> exchgValue(String exp) async{
     RegExp valueExp = RegExp('{([^}]+)}');
     String ret = exp;
 
@@ -219,8 +219,8 @@ class ScriptEngine {
           //           }
           String f = ac["front"] ?? "";
           String b = ac["back"] ?? "";
-          f = exchgValue(f);
-          b = exchgValue(b);
+          f = await exchgValue(f);
+          b = await exchgValue(b);
           ret = "$f$value$b";
           break;
         case "split":

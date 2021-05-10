@@ -218,7 +218,7 @@
                  {
                    "action": "saveUrlFile",
                    "url": "{this}",
-                   "fileName": "{android.currentdir}/temp/mm/{system.date}/{tid}-{title}/{picname}"
+                   "fileName": "{android.downloadDir}/mm/{system.date}/{tid}-{title}/{picname}"
                  }
                ],
                "falseProcess": [
