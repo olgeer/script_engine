@@ -6,7 +6,9 @@
   },
   "functionDefine": {
     "getPage": {
-      "parameters": ["page"],
+      "parameters": [
+        "page"
+      ],
       "process": [
         {
           "action": "getHtml",
@@ -36,7 +38,7 @@
               "eachProcess": [
                 {
                   "action": "condition",
-                  "exp": [
+                  "condExps": [
                     {
                       "expType": "contain",
                       "exp": "viewthread.php"
@@ -67,7 +69,7 @@
             },
             {
               "action": "remove",
-              "condition": [
+              "condExps": [
                 {
                   "expType": "isNull"
                 }
@@ -154,7 +156,7 @@
             },
             {
               "action": "remove",
-              "condition": [
+              "condExps": [
                 {
                   "expType": "contain",
                   "exp": "http",
@@ -162,7 +164,13 @@
                 },
                 {
                   "expType": "contain",
-                  "exp": ["jpg","gif","bmp","png","jpeg"],
+                  "exp": [
+                    "jpg",
+                    "gif",
+                    "bmp",
+                    "png",
+                    "jpeg"
+                  ],
                   "not": true,
                   "relation": "or"
                 }
@@ -208,28 +216,29 @@
           "action": "pop"
         },
         {
-               "action": "condition",
-               "exp": {
-                 "expType": "contain",
-                 "exp": "android",
-                 "source":"{system.platform}"
-               },
-               "trueProcess": [
-                 {
-                   "action": "saveUrlFile",
-                   "url": "{this}",
-                   "fileName": "{android.downloadDir}/mm/{system.date}/{tid}-{title}/{picname}"
-                 }
-               ],
-               "falseProcess": [
-                 {
-                 "action": "saveUrlFile",
-                 "url": "{this}",
-                 "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
-               }
-               ]
-             }
-
+          "action": "condition",
+          "condExps": [
+            {
+              "expType": "contain",
+              "exp": "android",
+              "source": "{system.platform}"
+            }
+          ],
+          "trueProcess": [
+            {
+              "action": "saveUrlFile",
+              "url": "{this}",
+              "fileName": "{android.applicationDir}/mm/{system.date}/{tid}-{title}/{picname}"
+            }
+          ],
+          "falseProcess": [
+            {
+              "action": "saveUrlFile",
+              "url": "{this}",
+              "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
+            }
+          ]
+        }
       ]
     }
   },
@@ -238,7 +247,9 @@
       "action": "for",
       "valueName": "ipage",
       "type": "list",
-      "list": [1,2],
+      "list": [
+        1
+      ],
       "loopProcess": [
         {
           "action": "callFunction",

@@ -140,6 +140,7 @@ class ScriptEngine {
         if (repValue != null) ret = ret.replaceFirst(valueExp, repValue);
       }
     }
+    if(debugMode)logger.fine("Exchange value [$exp] to [$ret]");
     return ret;
   }
 
@@ -517,15 +518,15 @@ class ScriptEngine {
         case "condition":
           //     {
           //       "action": "condition",
-          //       "exp": {
+          //       "exps": [{
           //         "expType": "contain",
           //         "exp": "搜索结果",
           //         "source":"{title}"     //source.contain(exp)
-          //       },
+          //       }],
           //       "trueProcess": [],
           //       "falseProcess": []
           //     }
-          if (conditionPatch(exchgValue(ac["source"]) ?? value, ac["exp"],
+          if (conditionPatch(value, ac["condExps"],
               debugId: debugId)) {
             ret = await singleProcess(value, ac["trueProcess"]);
           } else {
@@ -648,9 +649,9 @@ class ScriptEngine {
           }
         } else if (ac["except"] != null && ac["except"] is int) {
           value = [value.removeAt(ac["except"])];
-        } else if (ac["condition"] != null) {
+        } else if (ac["condExps"] != null) {
           value.removeWhere(
-              (element) => conditionPatch(element, ac["condition"]));
+              (element) => conditionPatch(element, ac["condExps"]));
         }
         ret = value;
         break;
@@ -789,6 +790,7 @@ class ScriptEngine {
   }
 
   bool condition(String value, dynamic ce, {bool patchResult, String debugId}) {
+    String condValue=exchgValue(ce["source"])??value;
     var exp = ce["exp"];
     if (exp is String) {
       exp = exchgValue(exp);
@@ -797,14 +799,15 @@ class ScriptEngine {
         exp[i] = exchgValue(exp[i]);
       }
     }
+
     switch (ce["expType"]) {
       case "isNull":
         patchResult =
-            relationAction(patchResult, value == null, ce["relation"]);
+            relationAction(patchResult, condValue == null, ce["relation"]);
         break;
       case "isEmpty":
         patchResult =
-            relationAction(patchResult, value.isEmpty, ce["relation"]);
+            relationAction(patchResult, condValue.isEmpty, ce["relation"]);
         break;
       case "in":
         // {
@@ -813,30 +816,32 @@ class ScriptEngine {
         //       "not": true
         // }
         patchResult = relationAction(
-            patchResult, exp.split(",").contains(value), ce["relation"]);
+            patchResult, exp.split(",").contains(condValue), ce["relation"]);
         break;
       case "compare":
         // {
         //       "expType": "compare",
         //       "exp": "viewthread.php",
+        //       "source": "{system.platform}", //* 存在则优先处理
         //       "not": true
         // }
         patchResult = relationAction(patchResult,
-            notAction(ce["not"], value.compareTo(exp) == 0), ce["relation"]);
+            notAction(ce["not"], condValue.compareTo(exp) == 0), ce["relation"]);
         break;
       case "contain":
         // {
         //       "expType": "contain",
         //       "exp": "viewthread.php",
+        //       "source": "{system.platform}", //* 存在则优先处理
         //       "relation": "and"
         // }
         if (exp is String) {
           patchResult = relationAction(patchResult,
-              notAction(ce["not"], value.contains(exp)), ce["relation"]);
+              notAction(ce["not"], condValue.contains(exp)), ce["relation"]);
         } else if (exp is List) {
           bool listResult = false;
           exp.forEach((element) {
-            listResult = value.contains(element) || listResult;
+            listResult = condValue.contains(element) || listResult;
           });
           patchResult = relationAction(
               patchResult, notAction(ce["not"], listResult), ce["relation"]);
@@ -851,7 +856,7 @@ class ScriptEngine {
     }
     if (debugMode)
       logger.fine(
-          "--${debugId ?? ""}--⚖️condition($ce,$value)--🔐result[$patchResult]");
+          "--${debugId ?? ""}--⚖️condition($ce,$condValue)--🔐result[$patchResult]");
     return patchResult;
   }
 
