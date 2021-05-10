@@ -208,10 +208,28 @@
           "action": "pop"
         },
         {
-          "action": "saveUrlFile",
-          "url": "{this}",
-          "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
-        }
+               "action": "condition",
+               "exp": {
+                 "expType": "contain",
+                 "exp": "android",
+                 "source":"{system.platform}"
+               },
+               "trueProcess": [
+                 {
+                   "action": "saveUrlFile",
+                   "url": "{this}",
+                   "fileName": "{android.currentdir}/temp/mm/{system.date}/{tid}-{title}/{picname}"
+                 }
+               ],
+               "falseProcess": [
+                 {
+                 "action": "saveUrlFile",
+                 "url": "{this}",
+                 "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
+               }
+               ]
+             }
+
       ]
     }
   },

@@ -11,6 +11,7 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
     {String debugId, bool debugMode});
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
+typedef valueProvider = String Function(String exp);
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -25,6 +26,7 @@ class ScriptEngine {
 
   singleAction extendSingleAction;
   multiAction extendMultiAction;
+  valueProvider extendValueProvide;
 
   final Logger logger = Logger("ScriptEngine");
 
@@ -37,6 +39,7 @@ class ScriptEngine {
   ScriptEngine(dynamic scriptSource,
       {this.extendSingleAction,
       this.extendMultiAction,
+      this.extendValueProvide,
       this.debugMode = false}) {
     // assert(scriptSource != null);
     initScript(scriptSource);
@@ -58,7 +61,7 @@ class ScriptEngine {
       scriptJson = json.decode(script ?? "{}");
     } catch (e) {
       print(e);
-      scriptJson={};
+      scriptJson = {};
     }
 
     // if (scriptJson["beginSegment"] == null) {
@@ -108,7 +111,10 @@ class ScriptEngine {
         String repValue;
         switch (valueName) {
           case "system.platform":
-            repValue=Platform.operatingSystem;
+            repValue = Platform.operatingSystem;
+            break;
+          case "system.platformVersion":
+            repValue = Platform.operatingSystemVersion;
             break;
           case "system.currentdir":
             repValue = getCurrentPath();
@@ -121,9 +127,11 @@ class ScriptEngine {
             break;
           default:
             var v = getValue(valueName);
-            if (v == null)
+            if (v == null) {
+              if (extendValueProvide != null)
+                repValue = extendValueProvide(valueName);
               break;
-            else if (v is String) {
+            } else if (v is String) {
               repValue = v;
             } else
               repValue = v.toString();
@@ -166,8 +174,9 @@ class ScriptEngine {
       // tStack.clear();
       setValue(SINGLERESULT, value);
       return value;
-    } else{
-      logger.warning("----[procCfg is null,Abort this singleProcess! Please check !");
+    } else {
+      logger.warning(
+          "----[procCfg is null,Abort this singleProcess! Please check !");
       return null;
     }
   }
