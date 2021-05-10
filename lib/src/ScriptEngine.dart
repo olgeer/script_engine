@@ -107,6 +107,9 @@ class ScriptEngine {
         String valueName = valueExp.firstMatch(ret).group(1);
         String repValue;
         switch (valueName) {
+          case "system.platform":
+            repValue=Platform.operatingSystem;
+            break;
           case "system.currentdir":
             repValue = getCurrentPath();
             break;
