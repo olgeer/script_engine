@@ -12,6 +12,7 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
 typedef valueProvider = String Function(String exp);
+typedef actionEvent = void Function(dynamic value,dynamic ac,String debugId);
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -28,6 +29,8 @@ class ScriptEngine {
   multiAction extendMultiAction;
   valueProvider extendValueProvide;
 
+  actionEvent onAction;
+
   final Logger logger = Logger("ScriptEngine");
 
   final String MULTIRESULT = "multiResult";
@@ -40,6 +43,7 @@ class ScriptEngine {
       {this.extendSingleAction,
       this.extendMultiAction,
       this.extendValueProvide,
+        this.onAction,
       this.debugMode = false}) {
     // assert(scriptSource != null);
     initScript(scriptSource);
@@ -192,6 +196,7 @@ class ScriptEngine {
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
+    if(onAction!=null)onAction(value,ac,debugId);
 
     try {
       switch (ac["action"]) {
@@ -615,6 +620,8 @@ class ScriptEngine {
       logger.fine(
           "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
     if (debugMode) logger.finest("--$debugId--value : $value)");
+    if(onAction!=null)onAction(value,ac,debugId);
+
     switch (ac["action"]) {
       case "multiSelector":
         switch (ac["type"]) {
