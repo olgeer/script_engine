@@ -102,11 +102,15 @@ class ScriptEngine {
   }
 
   String exchgValue(String exp) {
-    RegExp valueExp = RegExp('{([^}]+)}');
+    final RegExp valueExp = RegExp('{([^}]+)}');
+    final int MAXLOOP=100;
+    int loopTime=1;
     String ret = exp;
 
     if (exp != null) {
-      while (valueExp.hasMatch(ret)) {
+      while (valueExp.hasMatch(ret) && loopTime<MAXLOOP) {
+        loopTime++;
+
         String valueName = valueExp.firstMatch(ret).group(1);
         String repValue;
         switch (valueName) {
@@ -137,8 +141,9 @@ class ScriptEngine {
               repValue = v.toString();
             break;
         }
-        if (repValue != null) ret = ret.replaceFirst(valueExp, repValue);
+        ret = ret.replaceFirst(valueExp, repValue??"");
       }
+      if(loopTime>MAXLOOP)logger.warning("Dead loop ! exp=[$ret]");
     }
     if(debugMode)logger.fine("Exchange value [$exp] to [$ret]");
     return ret;
