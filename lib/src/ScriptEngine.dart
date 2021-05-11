@@ -12,7 +12,7 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
 typedef valueProvider = String Function(String exp);
-typedef actionEvent = void Function(dynamic value,dynamic ac,String debugId);
+typedef actionEvent = Future<void> Function(dynamic value,dynamic ac,String debugId);
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -36,6 +36,7 @@ class ScriptEngine {
   final String MULTIRESULT = "multiResult";
   final String SINGLERESULT = "singleResult";
   final String RETURNCODE = "returnCode";
+  bool isExit=false;
 
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
@@ -85,6 +86,10 @@ class ScriptEngine {
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
   Future run() async => await singleProcess("", scriptJson["beginSegment"]);
+
+  void stop() async {
+    isExit=true;
+  }
 
   ///调用某函数方法，期待脚本返回中间结果，以便后续程序使用
   ///isMultiResult参数为true时，返回最后一组结果列表，为false时，返回最终的字符串结果
@@ -171,6 +176,7 @@ class ScriptEngine {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
       for (var act in procCfg ?? []) {
+        if(isExit)break;
         String preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
@@ -599,6 +605,7 @@ class ScriptEngine {
     String debugId = genKey(lenght: 8);
     if (procCfg != null) {
       for (var act in procCfg) {
+        if(isExit)break;
         List<String> preErrorProc = objs;
         setValue("thisObjs", objs);
         objs = await mAction(objs, act, debugId: debugId);
