@@ -50,18 +50,24 @@ class ScriptEngine {
     initScript(scriptSource);
   }
 
-  void initScript(dynamic scriptSrc) async {
+  static Future<String> loadScript(dynamic scriptSrc)async{
+    String s;
     if (scriptSrc is Uri) {
-      if (scriptSrc.isScheme("file")) script = readFile(scriptSrc.path);
+      if (scriptSrc.isScheme("file")) s = readFile(scriptSrc.path);
       if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
-        script = await getHtml(scriptSrc.toString());
+        s = await getHtml(scriptSrc.toString());
     }
     if (scriptSrc is File) {
-      script = readFile(scriptSrc);
+      s = readFile(scriptSrc);
     }
     if (scriptSrc is String) {
-      script = scriptSrc;
+      s = scriptSrc;
     }
+    return s;
+  }
+
+  void initScript(dynamic scriptSrc) async {
+    script=await loadScript(scriptSrc);
     try {
       scriptJson = json.decode(script ?? "{}");
     } catch (e) {
