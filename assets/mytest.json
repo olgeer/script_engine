@@ -1,0 +1,12 @@
+{
+  "processName": "testProc",
+  "beginSegment": [
+    {
+      "action": "getValue",
+      "exp": "{android.applicationDir} - hello world"
+    },
+    {
+      "action": "print"
+    }
+  ]
+}

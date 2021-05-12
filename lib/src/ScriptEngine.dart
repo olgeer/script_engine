@@ -14,6 +14,7 @@ typedef multiAction = Future<List<String>>
 typedef valueProvider = String Function(String exp);
 typedef actionEvent = Future<void> Function(
     dynamic value, dynamic ac, String debugId);
+enum ScriptEngineState { Initing, Ready, Running, Done }
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -22,6 +23,7 @@ class ScriptEngine {
   Map<String, dynamic> functions;
   bool debugMode;
 
+  dynamic scriptSource;
   String script;
   Map<String, dynamic> scriptJson;
   String processName;
@@ -38,24 +40,27 @@ class ScriptEngine {
   final String SINGLERESULT = "singleResult";
   final String RETURNCODE = "returnCode";
   bool isExit = false;
+  ScriptEngineState state;
 
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
-  ScriptEngine(dynamic scriptSource,
+  ScriptEngine(this.scriptSource,
       {this.extendSingleAction,
       this.extendMultiAction,
       this.extendValueProvide,
       this.onAction,
-      this.debugMode = false}) {
-    // assert(scriptSource != null);
-    initScript(scriptSource);
+      this.debugMode = false}) :
+    assert(scriptSource != null);
+
+  Future<ScriptEngine> init()async{
+    await initScript(scriptSource);
+    return this;
   }
 
   static Future<String> loadScript(dynamic scriptSrc) async {
     String s;
     if (scriptSrc is Uri) {
-      if (scriptSrc.isScheme("file"))
-        s = await loadScript(File(scriptSrc.path));
+      if (scriptSrc.isScheme("file")) s = readFile(File(scriptSrc.path));
       if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
         s = await getHtml(scriptSrc.toString());
     }
@@ -64,9 +69,9 @@ class ScriptEngine {
     }
     if (scriptSrc is String) {
       if (scriptSrc.startsWith("http")) {
-        s = await loadScript(Uri.parse(scriptSrc));
+        s = await getHtml(scriptSrc);
       } else if (scriptSrc.startsWith("file")) {
-        s = await loadScript(File(scriptSrc));
+        s = readFile(File(Uri.parse(scriptSrc).path));
       } else {
         s = scriptSrc;
       }
@@ -74,32 +79,47 @@ class ScriptEngine {
     return s;
   }
 
-  void initScript(dynamic scriptSrc) async {
-    script = await loadScript(scriptSrc);
-    try {
-      scriptJson = json.decode(script ?? "{}");
-    } catch (e) {
-      print(e);
-      scriptJson = {};
+  Future<void> initScript(dynamic scriptSrc) async {
+    if(state==null){
+      state = ScriptEngineState.Initing;
+      try {
+        script = await loadScript(scriptSrc);
+        scriptJson = json.decode(script ?? "{}");
+      } catch (e) {
+        print(e);
+        scriptJson = {};
+      }
+
+      // if (scriptJson["beginSegment"] == null) {
+      //   logger.warning("找不到[beginSegment]段落，执行结束！");
+      //   return;
+      // }
+
+      processName = scriptJson["processName"] ?? "DefaultProcess";
+
+      if (scriptJson["globalValue"] != null) {
+        globalValue = Map.castFrom(scriptJson["globalValue"]);
+        reloadGlobalValue();
+      }
+
+      functions = Map.castFrom(scriptJson["functionDefine"] ?? {});
+
+      state = ScriptEngineState.Ready;
+    }else{
+      logger.fine("Script Engine had inited !");
     }
-
-    // if (scriptJson["beginSegment"] == null) {
-    //   logger.warning("找不到[beginSegment]段落，执行结束！");
-    //   return;
-    // }
-
-    processName = scriptJson["processName"] ?? "DefaultProcess";
-
-    if (scriptJson["globalValue"] != null) {
-      globalValue = Map.castFrom(scriptJson["globalValue"]);
-      reloadGlobalValue();
-    }
-
-    functions = Map.castFrom(scriptJson["functionDefine"] ?? {});
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
-  Future run() async => await singleProcess("", scriptJson["beginSegment"]);
+  Future<void> run() async{
+    if(state==null)await init();
+    // while (state == ScriptEngineState.Initing) {
+    //   Future.delayed(Duration(milliseconds: 500));
+    // }
+    if (scriptJson!=null&&scriptJson["beginSegment"] != null) {
+      singleProcess("", scriptJson["beginSegment"]);
+    }
+  }
 
   void stop() async {
     isExit = true;
