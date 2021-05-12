@@ -12,7 +12,8 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
 typedef valueProvider = String Function(String exp);
-typedef actionEvent = Future<void> Function(dynamic value,dynamic ac,String debugId);
+typedef actionEvent = Future<void> Function(
+    dynamic value, dynamic ac, String debugId);
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -36,7 +37,7 @@ class ScriptEngine {
   final String MULTIRESULT = "multiResult";
   final String SINGLERESULT = "singleResult";
   final String RETURNCODE = "returnCode";
-  bool isExit=false;
+  bool isExit = false;
 
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
@@ -44,16 +45,17 @@ class ScriptEngine {
       {this.extendSingleAction,
       this.extendMultiAction,
       this.extendValueProvide,
-        this.onAction,
+      this.onAction,
       this.debugMode = false}) {
     // assert(scriptSource != null);
     initScript(scriptSource);
   }
 
-  static Future<String> loadScript(dynamic scriptSrc)async{
+  static Future<String> loadScript(dynamic scriptSrc) async {
     String s;
     if (scriptSrc is Uri) {
-      if (scriptSrc.isScheme("file")) s = readFile(scriptSrc.path);
+      if (scriptSrc.isScheme("file"))
+        s = await loadScript(File(scriptSrc.path));
       if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
         s = await getHtml(scriptSrc.toString());
     }
@@ -61,13 +63,19 @@ class ScriptEngine {
       s = readFile(scriptSrc);
     }
     if (scriptSrc is String) {
-      s = scriptSrc;
+      if (scriptSrc.startsWith("http")) {
+        s = await loadScript(Uri.parse(scriptSrc));
+      } else if (scriptSrc.startsWith("file")) {
+        s = await loadScript(File(scriptSrc));
+      } else {
+        s = scriptSrc;
+      }
     }
     return s;
   }
 
   void initScript(dynamic scriptSrc) async {
-    script=await loadScript(scriptSrc);
+    script = await loadScript(scriptSrc);
     try {
       scriptJson = json.decode(script ?? "{}");
     } catch (e) {
@@ -94,7 +102,7 @@ class ScriptEngine {
   Future run() async => await singleProcess("", scriptJson["beginSegment"]);
 
   void stop() async {
-    isExit=true;
+    isExit = true;
   }
 
   ///调用某函数方法，期待脚本返回中间结果，以便后续程序使用
@@ -118,12 +126,12 @@ class ScriptEngine {
 
   String exchgValue(String exp) {
     final RegExp valueExp = RegExp('{([^}]+)}');
-    final int MAXLOOP=100;
-    int loopTime=1;
+    final int MAXLOOP = 100;
+    int loopTime = 1;
     String ret = exp;
 
     if (exp != null) {
-      while (valueExp.hasMatch(ret) && loopTime<MAXLOOP) {
+      while (valueExp.hasMatch(ret) && loopTime < MAXLOOP) {
         loopTime++;
 
         String valueName = valueExp.firstMatch(ret).group(1);
@@ -156,11 +164,11 @@ class ScriptEngine {
               repValue = v.toString();
             break;
         }
-        ret = ret.replaceFirst(valueExp, repValue??"");
+        ret = ret.replaceFirst(valueExp, repValue ?? "");
       }
-      if(loopTime>MAXLOOP)logger.warning("Dead loop ! exp=[$ret]");
+      if (loopTime > MAXLOOP) logger.warning("Dead loop ! exp=[$ret]");
     }
-    if(debugMode)logger.fine("Exchange value [$exp] to [$ret]");
+    if (debugMode) logger.fine("Exchange value [$exp] to [$ret]");
     return ret;
   }
 
@@ -182,7 +190,7 @@ class ScriptEngine {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
       for (var act in procCfg ?? []) {
-        if(isExit)break;
+        if (isExit) break;
         String preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
@@ -208,7 +216,7 @@ class ScriptEngine {
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
-    if(onAction!=null)onAction(value,ac,debugId);
+    if (onAction != null) onAction(value, ac, debugId);
 
     try {
       switch (ac["action"]) {
@@ -403,7 +411,7 @@ class ScriptEngine {
 
           Map<String, dynamic> queryParameters =
               Map.castFrom(ac["queryParameters"] ?? {});
-          queryParameters.forEach((key, value) async{
+          queryParameters.forEach((key, value) async {
             if (value is String) {
               queryParameters[key] = Uri.encodeQueryComponent(exchgValue(value),
                   encoding: encoding);
@@ -548,8 +556,7 @@ class ScriptEngine {
           //       "trueProcess": [],
           //       "falseProcess": []
           //     }
-          if (conditionPatch(value, ac["condExps"],
-              debugId: debugId)) {
+          if (conditionPatch(value, ac["condExps"], debugId: debugId)) {
             ret = await singleProcess(value, ac["trueProcess"]);
           } else {
             ret = await singleProcess(value, ac["falseProcess"]);
@@ -611,7 +618,7 @@ class ScriptEngine {
     String debugId = genKey(lenght: 8);
     if (procCfg != null) {
       for (var act in procCfg) {
-        if(isExit)break;
+        if (isExit) break;
         List<String> preErrorProc = objs;
         setValue("thisObjs", objs);
         objs = await mAction(objs, act, debugId: debugId);
@@ -633,7 +640,7 @@ class ScriptEngine {
       logger.fine(
           "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
     if (debugMode) logger.finest("--$debugId--value : $value)");
-    if(onAction!=null)onAction(value,ac,debugId);
+    if (onAction != null) onAction(value, ac, debugId);
 
     switch (ac["action"]) {
       case "multiSelector":
@@ -815,7 +822,7 @@ class ScriptEngine {
   }
 
   bool condition(String value, dynamic ce, {bool patchResult, String debugId}) {
-    String condValue=exchgValue(ce["source"])??value;
+    String condValue = exchgValue(ce["source"]) ?? value;
     var exp = ce["exp"];
     if (exp is String) {
       exp = exchgValue(exp);
@@ -850,8 +857,10 @@ class ScriptEngine {
         //       "source": "{system.platform}", //* 存在则优先处理
         //       "not": true
         // }
-        patchResult = relationAction(patchResult,
-            notAction(ce["not"], condValue.compareTo(exp) == 0), ce["relation"]);
+        patchResult = relationAction(
+            patchResult,
+            notAction(ce["not"], condValue.compareTo(exp) == 0),
+            ce["relation"]);
         break;
       case "contain":
         // {
