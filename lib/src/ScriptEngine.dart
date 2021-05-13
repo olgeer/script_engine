@@ -12,8 +12,8 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
 typedef valueProvider = String Function(String exp);
-typedef actionEvent = Future<void> Function(
-    dynamic value, dynamic ac, String debugId);
+typedef actionEvent = Future<void> Function(dynamic value, dynamic ac,
+    dynamic ret, String debugId);
 enum ScriptEngineState { Initing, Ready, Running, Done }
 
 class ScriptEngine {
@@ -33,6 +33,7 @@ class ScriptEngine {
   valueProvider extendValueProvide;
 
   actionEvent onAction;
+  void Function(ScriptEngineState s) onScriptEngineStateChange;
 
   final Logger logger = Logger("ScriptEngine");
 
@@ -49,10 +50,11 @@ class ScriptEngine {
       this.extendMultiAction,
       this.extendValueProvide,
       this.onAction,
-      this.debugMode = false}) :
-    assert(scriptSource != null);
+      this.onScriptEngineStateChange,
+      this.debugMode = false})
+      : assert(scriptSource != null);
 
-  Future<ScriptEngine> init()async{
+  Future<ScriptEngine> init() async {
     await initScript(scriptSource);
     return this;
   }
@@ -80,8 +82,9 @@ class ScriptEngine {
   }
 
   Future<void> initScript(dynamic scriptSrc) async {
-    if(state==null){
+    if (state == null) {
       state = ScriptEngineState.Initing;
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
       try {
         script = await loadScript(scriptSrc);
         scriptJson = json.decode(script ?? "{}");
@@ -105,20 +108,29 @@ class ScriptEngine {
       functions = Map.castFrom(scriptJson["functionDefine"] ?? {});
 
       state = ScriptEngineState.Ready;
-    }else{
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+    } else {
       logger.fine("Script Engine had inited !");
     }
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
-  Future<void> run() async{
-    if(state==null)await init();
+  Future<String> run() async {
+    if (state == null) await init();
     // while (state == ScriptEngineState.Initing) {
     //   Future.delayed(Duration(milliseconds: 500));
     // }
-    if (scriptJson!=null&&scriptJson["beginSegment"] != null) {
-      singleProcess("", scriptJson["beginSegment"]);
-    }
+    if (scriptJson != null && scriptJson["beginSegment"] != null) {
+      state = ScriptEngineState.Running;
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+
+      String ret = await singleProcess("", scriptJson["beginSegment"]);
+
+      state = ScriptEngineState.Done;
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+      return ret;
+    } else
+      return null;
   }
 
   void stop() async {
@@ -209,6 +221,7 @@ class ScriptEngine {
   Future<String> singleProcess(String value, dynamic procCfg) async {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
+
       for (var act in procCfg ?? []) {
         if (isExit) break;
         String preErrorProc = value;
@@ -236,7 +249,6 @@ class ScriptEngine {
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
-    if (onAction != null) onAction(value, ac, debugId);
 
     try {
       switch (ac["action"]) {
@@ -625,6 +637,9 @@ class ScriptEngine {
       logger.warning("--$debugId--💃action($ac,$value)");
       // throw e;
     }
+
+    if (onAction != null) onAction(value, ac, debugId, ret);
+
     if (debugMode && ret != null)
       logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
     // if (debugMode) logger.finest("--$debugId--⚠️️result[$ret]");
@@ -660,7 +675,6 @@ class ScriptEngine {
       logger.fine(
           "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
     if (debugMode) logger.finest("--$debugId--value : $value)");
-    if (onAction != null) onAction(value, ac, debugId);
 
     switch (ac["action"]) {
       case "multiSelector":
@@ -824,6 +838,9 @@ class ScriptEngine {
           logger.warning("Unknow config : [${ac.toString()}]");
         break;
     }
+
+    if (onAction != null) onAction(value, ac, ret, debugId);
+
     if (debugMode)
       logger
           .fine("--${debugId ?? ""}--🧩result[${shortString(ret.toString())}]");
