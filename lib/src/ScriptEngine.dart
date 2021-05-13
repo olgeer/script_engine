@@ -12,8 +12,8 @@ typedef singleAction = Future<String> Function(String value, dynamic ac,
 typedef multiAction = Future<List<String>>
     Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
 typedef valueProvider = String Function(String exp);
-typedef actionEvent = Future<void> Function(dynamic value, dynamic ac,
-    dynamic ret, String debugId);
+typedef actionEvent = Future<void> Function(
+    dynamic value, dynamic ac, dynamic ret, String debugId);
 enum ScriptEngineState { Initing, Ready, Running, Done }
 
 class ScriptEngine {
@@ -467,18 +467,13 @@ class ScriptEngine {
                   debugMode && Logger.root.level.value > Level.FINE.value);
           break;
         case "selector":
-          //            {
-          //               "action": "selector",
-          //               "type": "dom",
-          //               "script": "[property=\"og:novel:book_name\"]",
-          //               "property": "content"
-          //             }
-          //            {
-          //               "action": "selector",
-          //               "type": "xpath",
-          //               "script": "//p[3]/span[1]/text()"
-          //             },
           switch (ac["type"]) {
+            //            {
+            //               "action": "selector",
+            //               "type": "dom",
+            //               "script": "[property=\"og:novel:book_name\"]",
+            //               "property": "content"
+            //             }
             case "dom":
               var tmp = HtmlParser(value)
                   .parse()
@@ -500,8 +495,26 @@ class ScriptEngine {
               } else
                 ret = "";
               break;
+            //            {
+            //               "action": "selector",
+            //               "type": "xpath",
+            //               "script": "//p[3]/span[1]/text()"
+            //             },
             case "xpath":
               ret = XPath.source(value).query(ac["script"])?.get() ?? "";
+              break;
+            //            {
+            //               "action": "selector",
+            //               "type": "regexp",
+            //               "script": "<[^>]*>"
+            //             }, //仅匹配第一次发现的
+            case "regexp":
+              RegExpMatch rem =
+                  RegExp(exchgValue(ac["script"]) ?? "").firstMatch(value);
+              if (rem.groupCount > 0)
+                ret = rem.group(1);
+              else
+                ret = rem.group(0);
               break;
           }
           break;

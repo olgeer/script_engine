@@ -137,6 +137,29 @@
           "script": "form"
         },
         {
+          "action": "push"
+        },
+        {
+          "action": "selector",
+          "type": "regexp",
+          "script": "发表于([^<]*)<"
+        },
+        {
+          "action": "trim"
+        },
+        {
+          "action": "split",
+          "pattern": " ",
+          "index": 0
+        },
+        {
+          "action": "setValue",
+          "valueName": "postdate"
+        },
+        {
+          "action": "pop"
+        },
+        {
           "action": "replace",
           "from": "<br[ |/]*>",
           "to": "\n"
@@ -228,14 +251,14 @@
             {
               "action": "saveUrlFile",
               "url": "{this}",
-              "fileName": "{android.applicationDir}/mm/{system.date}/{tid}-{title}/{picname}"
+              "fileName": "{android.applicationDir}/mm/{postdate}/{tid}-{title}/{picname}"
             }
           ],
           "falseProcess": [
             {
               "action": "saveUrlFile",
               "url": "{this}",
-              "fileName": "{system.currentdir}/../../temp/mm/{system.date}/{tid}-{title}/{picname}"
+              "fileName": "{system.currentdir}/../../temp/mm/{postdate}/{tid}-{title}/{picname}"
             }
           ]
         }

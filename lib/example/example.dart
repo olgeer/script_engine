@@ -34,6 +34,14 @@ void main(List<String> args) async{
   // logger.severe(getCurrentPath());
   // var uri=Uri.parse("asset:assets/config.json");
   // logger.fine("${uri.scheme} -- ${uri.path}");
+
+//   print(RegExp("发表于([^<]*)<").firstMatch("""
+// 发表于 2021-5-12 09:49
+//      <a href="viewpro.php?uid=3341226" target="_blank">资料</a>
+// 发表于 2021-5-13 09:49
+//      <a href="viewpro.php?uid=3341226" target="_blank">资料</a>
+//   """).group(1));
+  // print("[$re]");
 }
 
 void showUsage(){
