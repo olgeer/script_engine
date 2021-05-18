@@ -7,33 +7,34 @@ import 'package:fast_gbk/fast_gbk.dart';
 import 'actionCollect.dart';
 import 'HtmlCodec.dart';
 
-typedef singleAction = Future<String> Function(String value, dynamic ac,
-    {String debugId, bool debugMode});
-typedef multiAction = Future<List<String>>
-    Function(List<String> value, dynamic ac, {String debugId, bool debugMode});
+typedef singleAction = Future<String?> Function(String? value, dynamic ac,
+    {String? debugId, bool? debugMode});
+typedef multiAction = Future<List<String?>> Function(
+    List<String?> value, dynamic ac,
+    {String? debugId, bool? debugMode});
 typedef valueProvider = String Function(String exp);
 typedef actionEvent = Future<void> Function(
-    dynamic value, dynamic ac, dynamic ret, String debugId);
+    dynamic value, dynamic ac, dynamic? ret, String debugId);
 enum ScriptEngineState { Initing, Ready, Running, Done }
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
-  List<String> tStack = []; //配置运行时堆栈
-  Map<String, dynamic> globalValue;
-  Map<String, dynamic> functions;
+  List<String?> tStack = []; //配置运行时堆栈
+  Map<String, dynamic>? globalValue;
+  Map<String, dynamic> functions = {};
   bool debugMode;
 
-  dynamic scriptSource;
-  String script;
-  Map<String, dynamic> scriptJson;
-  String processName;
+  late dynamic scriptSource;
+  String? script;
+  late Map<String, dynamic> scriptJson;
+  late String processName;
 
-  singleAction extendSingleAction;
-  multiAction extendMultiAction;
-  valueProvider extendValueProvide;
+  singleAction? extendSingleAction;
+  multiAction? extendMultiAction;
+  valueProvider? extendValueProvide;
 
-  actionEvent onAction;
-  void Function(ScriptEngineState s) onScriptEngineStateChange;
+  actionEvent? onAction;
+  void Function(ScriptEngineState s)? onScriptEngineStateChange;
 
   final Logger logger = Logger("ScriptEngine");
 
@@ -41,7 +42,7 @@ class ScriptEngine {
   final String SINGLERESULT = "singleResult";
   final String RETURNCODE = "returnCode";
   bool isExit = false;
-  ScriptEngineState state;
+  ScriptEngineState? state;
 
   ///初始化json脚本引擎，暂时一个脚本对应一个引擎，拥有独立的变量及堆栈空间
   ///scriptSource可以是String，Uri，File等类型，指向json脚本内容
@@ -59,8 +60,8 @@ class ScriptEngine {
     return this;
   }
 
-  static Future<String> loadScript(dynamic scriptSrc) async {
-    String s;
+  static Future<String?> loadScript(dynamic scriptSrc) async {
+    String? s;
     if (scriptSrc is Uri) {
       if (scriptSrc.isScheme("file")) s = readFile(File(scriptSrc.path));
       if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
@@ -84,7 +85,7 @@ class ScriptEngine {
   Future<void> initScript(dynamic scriptSrc) async {
     if (state == null) {
       state = ScriptEngineState.Initing;
-      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange!(state!);
       try {
         script = await loadScript(scriptSrc);
         scriptJson = json.decode(script ?? "{}");
@@ -101,33 +102,33 @@ class ScriptEngine {
       processName = scriptJson["processName"] ?? "DefaultProcess";
 
       if (scriptJson["globalValue"] != null) {
-        globalValue = Map.castFrom(scriptJson["globalValue"]);
+        globalValue = Map.castFrom(scriptJson["globalValue"] ?? {});
         reloadGlobalValue();
       }
 
       functions = Map.castFrom(scriptJson["functionDefine"] ?? {});
 
       state = ScriptEngineState.Ready;
-      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange!(state!);
     } else {
       logger.fine("Script Engine had inited !");
     }
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
-  Future<String> run() async {
+  Future<String?> run() async {
     if (state == null) await init();
     // while (state == ScriptEngineState.Initing) {
     //   Future.delayed(Duration(milliseconds: 500));
     // }
-    if (scriptJson != null && scriptJson["beginSegment"] != null) {
+    if (scriptJson["beginSegment"] != null) {
       state = ScriptEngineState.Running;
-      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange!(state!);
 
-      String ret = await singleProcess("", scriptJson["beginSegment"]);
+      String? ret = await singleProcess("", scriptJson["beginSegment"]);
 
       state = ScriptEngineState.Done;
-      if (onScriptEngineStateChange != null) onScriptEngineStateChange(state);
+      if (onScriptEngineStateChange != null) onScriptEngineStateChange!(state!);
       return ret;
     } else
       return null;
@@ -156,18 +157,18 @@ class ScriptEngine {
     });
   }
 
-  String exchgValue(String exp) {
+  String? exchgValue(String? exp) {
     final RegExp valueExp = RegExp('{([^}]+)}');
     final int MAXLOOP = 100;
     int loopTime = 1;
-    String ret = exp;
+    String? ret = exp;
 
     if (exp != null) {
-      while (valueExp.hasMatch(ret) && loopTime < MAXLOOP) {
+      while (valueExp.hasMatch(ret!) && loopTime < MAXLOOP) {
         loopTime++;
 
-        String valueName = valueExp.firstMatch(ret).group(1);
-        String repValue;
+        String valueName = valueExp.firstMatch(ret)!.group(1)!;
+        String? repValue;
         switch (valueName) {
           case "system.platform":
             repValue = Platform.operatingSystem;
@@ -188,7 +189,7 @@ class ScriptEngine {
             var v = getValue(valueName);
             if (v == null) {
               if (extendValueProvide != null)
-                repValue = extendValueProvide(valueName);
+                repValue = extendValueProvide!(valueName);
               break;
             } else if (v is String) {
               repValue = v;
@@ -205,7 +206,6 @@ class ScriptEngine {
   }
 
   void setValue(String key, dynamic value) {
-    assert(key != null, "key must NOT null");
     if (tValue[key] != null) {
       tValue[key] = value;
     } else {
@@ -214,17 +214,17 @@ class ScriptEngine {
     logger.finer("Set value($key) to $value");
   }
 
-  String removeValue(String key) => tValue.remove(key ?? "");
+  String removeValue(String key) => tValue.remove(key);
 
-  dynamic getValue(String key) => tValue[key ?? ""];
+  dynamic getValue(String key) => tValue[key];
 
-  Future<String> singleProcess(String value, dynamic procCfg) async {
+  Future<String?> singleProcess(String? value, dynamic? procCfg) async {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
 
       for (var act in procCfg ?? []) {
         if (isExit) break;
-        String preErrorProc = value;
+        String? preErrorProc = value;
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null && (getValue(RETURNCODE) ?? 1) != 0) {
@@ -244,8 +244,9 @@ class ScriptEngine {
     }
   }
 
-  Future<String> action(String value, dynamic ac, {String debugId = ""}) async {
-    String ret;
+  Future<String?> action(String? value, dynamic ac,
+      {String debugId = ""}) async {
+    String? ret;
     bool refreshValue = true;
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
@@ -266,7 +267,7 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          ret = value.replaceAll(RegExp(ac["from"]), ac["to"]);
+          ret = value?.replaceAll(RegExp(ac["from"]), ac["to"]);
           break;
         case "htmlDecode":
           //           {
@@ -282,8 +283,8 @@ class ScriptEngine {
           //           }
           String f = ac["front"] ?? "";
           String b = ac["back"] ?? "";
-          f = exchgValue(f);
-          b = exchgValue(b);
+          f = exchgValue(f)!;
+          b = exchgValue(b)!;
           ret = "$f$value$b";
           break;
         case "split":
@@ -293,14 +294,14 @@ class ScriptEngine {
           //               "index": 1
           //             },
           if (ac["index"] is int)
-            ret = value.split(ac["pattern"])[ac["index"]];
+            ret = value?.split(ac["pattern"])[ac["index"]];
           else if (ac["index"] is String) {
             switch (ac["index"]) {
               case "first":
-                ret = value.split(ac["pattern"]).first;
+                ret = value?.split(ac["pattern"]).first;
                 break;
               case "last":
-                ret = value.split(ac["pattern"]).last;
+                ret = value?.split(ac["pattern"]).last;
                 break;
               default:
                 break;
@@ -311,7 +312,7 @@ class ScriptEngine {
           //            {
           //              "action": "trim"
           //            }
-          ret = value.trim();
+          ret = value?.trim();
           break;
         case "setValue":
           //            {
@@ -371,7 +372,8 @@ class ScriptEngine {
           //               "action": "json",
           //               "keyName": "info"
           //             },
-          if (ac["keyName"] != null) ret = jsonDecode(value)[ac["keyName"]];
+          if (ac["keyName"] != null && value != null)
+            ret = jsonDecode(value)[ac["keyName"]];
           break;
         case "readFile":
           //            {
@@ -380,9 +382,9 @@ class ScriptEngine {
           //               "toValue": "txtfile"
           //             },
           if (ac["fileName"] != null) {
-            String fileContent = readFile(exchgValue(ac["fileName"]));
+            String fileContent = readFile(exchgValue(ac["fileName"])) ?? "";
             if (ac["toValue"] != null) {
-              setValue(exchgValue(ac["toValue"]), fileContent);
+              setValue(exchgValue(ac["toValue"])!, fileContent);
               ret = value;
             } else
               ret = fileContent;
@@ -395,8 +397,8 @@ class ScriptEngine {
           //               "saveContent": "{title}\n\r{content}"
           //             },
           if (ac["fileName"] != null) {
-            saveFile(exchgValue(ac["fileName"]),
-                exchgValue(ac["saveContent"]) ?? value);
+            saveFile(exchgValue(ac["fileName"])!,
+                exchgValue(ac["saveContent"]) ?? value ?? "");
           }
           refreshValue = false;
           break;
@@ -408,7 +410,7 @@ class ScriptEngine {
           //               "overwrite": true    //* 默认为false
           //             },
           if (ac["url"] != null) {
-            saveUrlFile(exchgValue(ac["url"]),
+            saveUrlFile(exchgValue(ac["url"])!,
                 saveFileWithoutExt: exchgValue(ac["fileName"]),
                 overwrite: ac["overwrite"] ?? false);
           }
@@ -435,36 +437,42 @@ class ScriptEngine {
           //           "method": "get",
           //           "charset": "gbk"
           //         }
-          String htmlUrl = exchgValue(ac["url"]) ?? value;
-          // logger.fine("htmlUrl=$htmlUrl");
-          String body = exchgValue(ac["body"]);
+          String? htmlUrl = exchgValue(ac["url"]) ?? value;
+          if (htmlUrl != null) {
+            // logger.fine("htmlUrl=$htmlUrl");
+            String? body = exchgValue(ac["body"]);
 
-          Encoding encoding = "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
+            Encoding encoding =
+                "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
-          Map<String, dynamic> queryParameters =
-              Map.castFrom(ac["queryParameters"] ?? {});
-          queryParameters.forEach((key, value) async {
-            if (value is String) {
-              queryParameters[key] = Uri.encodeQueryComponent(exchgValue(value),
-                  encoding: encoding);
-            }
-          });
+            Map<String, dynamic> queryParameters =
+                Map.castFrom(ac["queryParameters"] ?? {});
+            queryParameters.forEach((key, value) async {
+              if (value is String) {
+                queryParameters[key] = Uri.encodeQueryComponent(
+                    exchgValue(value)!,
+                    encoding: encoding);
+              }
+            });
 
-          Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
+            Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
 
-          RequestMethod method = "post".compareTo(ac["method"] ?? "get") == 0
-              ? RequestMethod.post
-              : RequestMethod.get;
+            RequestMethod method = "post".compareTo(ac["method"] ?? "get") == 0
+                ? RequestMethod.post
+                : RequestMethod.get;
 
-          ret = await getHtml(htmlUrl,
-              method: method,
-              encoding: encoding,
-              headers: headers,
-              body: body,
-              queryParameters: queryParameters,
-              debugId: debugId,
-              debugMode:
-                  debugMode && Logger.root.level.value > Level.FINE.value);
+            ret = await getHtml(htmlUrl,
+                method: method,
+                encoding: encoding,
+                headers: headers,
+                body: body,
+                queryParameters: queryParameters,
+                debugId: debugId,
+                debugMode:
+                    debugMode && Logger.root.level.value > Level.FINE.value);
+          } else {
+            logger.warning("url is null");
+          }
           break;
         case "selector":
           switch (ac["type"]) {
@@ -477,7 +485,7 @@ class ScriptEngine {
             case "dom":
               var tmp = HtmlParser(value)
                   .parse()
-                  .querySelector(exchgValue(ac["script"]));
+                  .querySelector(exchgValue(ac["script"]) ?? "");
               if (tmp != null) {
                 switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
@@ -501,7 +509,7 @@ class ScriptEngine {
             //               "script": "//p[3]/span[1]/text()"
             //             },
             case "xpath":
-              ret = XPath.source(value).query(ac["script"])?.get() ?? "";
+              ret = XPath.source(value ?? "").query(ac["script"] ?? "").get();
               break;
             //            {
             //               "action": "selector",
@@ -509,12 +517,14 @@ class ScriptEngine {
             //               "script": "<[^>]*>"
             //             }, //仅匹配第一次发现的
             case "regexp":
-              RegExpMatch rem =
-                  RegExp(exchgValue(ac["script"]) ?? "").firstMatch(value);
-              if (rem.groupCount > 0)
-                ret = rem.group(1);
-              else
-                ret = rem.group(0);
+              RegExpMatch? rem = RegExp(exchgValue(ac["script"]) ?? "")
+                  .firstMatch(value ?? "");
+              if (rem != null) {
+                if (rem.groupCount > 0)
+                  ret = rem.group(1);
+                else
+                  ret = rem.group(0);
+              }
               break;
           }
           break;
@@ -530,7 +540,7 @@ class ScriptEngine {
               var tmps =
                   HtmlParser(value).parse().querySelectorAll(ac["script"]);
               var tmp;
-              if (tmps?.length ?? 0 > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
+              if ((tmps.length) > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
               if (tmp != null) {
                 switch (ac["property"] ?? "innerHtml") {
                   case "innerHtml":
@@ -549,8 +559,9 @@ class ScriptEngine {
                 ret = "";
               break;
             case "xpath":
-              var tmps = XPath.source(value).query(ac["script"])?.list();
-              if ((tmps?.length ?? 0) > 0)
+              var tmps =
+                  XPath.source(value ?? "").query(ac["script"] ?? "").list();
+              if (tmps.length > 0)
                 ret = tmps.elementAt(ac["index"] ?? 0);
               else
                 ret = "";
@@ -611,15 +622,14 @@ class ScriptEngine {
           setValue(RETURNCODE, 0);
           ret = null;
           break;
-        case "exit":
-          exit(ac["code"] ?? 0);
-          break;
+
         case "callMultiProcess":
           //    {
           //       "action": "callMultiProcess",
           //       "multiProcess": []
           //    }
-          var multiResult = (await multiProcess([value], ac["multiProcess"]));
+          var multiResult =
+              (await multiProcess([value ?? ""], ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
@@ -637,9 +647,11 @@ class ScriptEngine {
             logger.warning("Function ${ac["functionName"]} is not found"); //
           }
           break;
+        case "exit":
+          exit(ac["code"] ?? 0);
         default:
           if (extendSingleAction != null) {
-            ret = await extendSingleAction(value, ac,
+            ret = await extendSingleAction!(value, ac,
                 debugId: debugId, debugMode: debugMode);
           } else if (debugMode)
             logger.fine("Unknow config : [${ac.toString()}]");
@@ -651,7 +663,7 @@ class ScriptEngine {
       // throw e;
     }
 
-    if (onAction != null) onAction(value, ac, debugId, ret);
+    if (onAction != null) onAction!(value, ac, ret, debugId);
 
     if (debugMode && ret != null)
       logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
@@ -662,28 +674,29 @@ class ScriptEngine {
     return ret;
   }
 
-  Future<List<String>> multiProcess(List<String> objs, dynamic procCfg) async {
+  Future<List<String?>> multiProcess(
+      List<String?> objs, dynamic procCfg) async {
     String debugId = genKey(lenght: 8);
     if (procCfg != null) {
       for (var act in procCfg) {
         if (isExit) break;
-        List<String> preErrorProc = objs;
+        List<String?> preErrorProc = objs;
         setValue("thisObjs", objs);
         objs = await mAction(objs, act, debugId: debugId);
-        if (objs == null) {
-          logger.warning(
-              "--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
-          break;
-        }
+        // if (objs == null) {
+        //   logger.warning(
+        //       "--$debugId--[Return null,Abort this MultiProcess! Please check multiAction($act,$preErrorProc)");
+        //   break;
+        // }
       }
       setValue(MULTIRESULT, objs);
     }
     return objs;
   }
 
-  Future<List<String>> mAction(List<String> value, dynamic ac,
+  Future<List<String?>> mAction(List<String?> value, dynamic ac,
       {String debugId = ""}) async {
-    List<String> ret;
+    List<String?> ret = [];
     if (debugMode)
       logger.fine(
           "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
@@ -698,8 +711,9 @@ class ScriptEngine {
             //               "type": "dom",
             //               "script": ".sbintro"
             //             }
-            ret = domList2StrList(
-                HtmlParser(value[0]).parse().querySelectorAll(ac["script"]));
+            ret = domList2StrList(HtmlParser(value[0] ?? "")
+                .parse()
+                .querySelectorAll(ac["script"]));
             break;
           case "xpath":
             //          {
@@ -707,7 +721,7 @@ class ScriptEngine {
             //             "type": "xpath",
             //             "script": "//a/@href"
             //           }
-            ret = XPath.source(value[0]).query(ac["script"]).list();
+            ret = XPath.source(value[0] ?? "").query(ac["script"]).list();
             break;
         }
         break;
@@ -740,9 +754,9 @@ class ScriptEngine {
         //               "asc": true
         //             },
         if (ac["asc"] ?? true) {
-          value.sort((l, r) => l.compareTo(r));
+          value.sort((l, r) => (l ?? "").compareTo(r ?? ""));
         } else {
-          value.sort((l, r) => r.compareTo(l));
+          value.sort((l, r) => (r ?? "").compareTo(l ?? ""));
         }
         ret = value;
         break;
@@ -769,10 +783,10 @@ class ScriptEngine {
         //             },
         File saveFile;
         if (ac["fileName"] != null) {
-          saveFile = File(exchgValue(ac["fileName"]));
+          saveFile = File(exchgValue(ac["fileName"])!);
           if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
-          for (String line in value) {
-            saveFile.writeAsStringSync(line,
+          for (String? line in value) {
+            saveFile.writeAsStringSync(line ?? "",
                 mode: FileMode.append, encoding: utf8, flush: true);
           }
           ret = value;
@@ -792,9 +806,9 @@ class ScriptEngine {
         //     }
         //   ]
         // }
-        List<String> tmpList = [];
+        List<String?> tmpList = [];
 
-        for (String one in value) {
+        for (String? one in value) {
           ///如果单条处理存在则先处理
           if ((ac["eachProcess"]?.length ?? 0) > 0)
             tmpList.add(await singleProcess(one, ac["eachProcess"]));
@@ -826,9 +840,9 @@ class ScriptEngine {
         //             }
         //           ]
         //         }
-        List<String> tmpList = [];
+        List<String?> tmpList = [];
 
-        for (String one in value) {
+        for (String? one in value) {
           ///如果单条处理存在则先处理
           if ((ac["preProcess"] ?? []).length > 0)
             one = await singleProcess(one, ac["preProcess"]);
@@ -845,34 +859,34 @@ class ScriptEngine {
         break;
       default:
         if (extendSingleAction != null) {
-          ret = await extendMultiAction(value, ac,
+          ret = await extendMultiAction!(value, ac,
               debugId: debugId, debugMode: debugMode);
         } else if (debugMode)
           logger.warning("Unknow config : [${ac.toString()}]");
         break;
     }
 
-    if (onAction != null) onAction(value, ac, ret, debugId);
+    if (onAction != null) onAction!(value, ac, ret, debugId);
 
     if (debugMode)
-      logger
-          .fine("--${debugId ?? ""}--🧩result[${shortString(ret.toString())}]");
+      logger.fine("--$debugId--🧩result[${shortString(ret.toString())}]");
     // if (debugMode) logger.finest("--${debugId ?? ""}--🧩result[$ret]");
     return ret;
   }
 
-  bool conditionPatch(String value, dynamic condCfg, {String debugId}) {
-    bool result;
+  bool conditionPatch(String? value, dynamic condCfg, {String? debugId}) {
+    bool? result;
     if (condCfg != null) {
       for (var cond in condCfg) {
         result = condition(value, cond, patchResult: result, debugId: debugId);
       }
     }
-    return result;
+    return result ?? false;
   }
 
-  bool condition(String value, dynamic ce, {bool patchResult, String debugId}) {
-    String condValue = exchgValue(ce["source"]) ?? value;
+  bool? condition(String? value, dynamic ce,
+      {bool? patchResult, String? debugId}) {
+    String? condValue = exchgValue(ce["source"]) ?? value;
     var exp = ce["exp"];
     if (exp is String) {
       exp = exchgValue(exp);
@@ -888,8 +902,8 @@ class ScriptEngine {
             relationAction(patchResult, condValue == null, ce["relation"]);
         break;
       case "isEmpty":
-        patchResult =
-            relationAction(patchResult, condValue.isEmpty, ce["relation"]);
+        patchResult = relationAction(
+            patchResult, condValue?.isEmpty ?? true, ce["relation"]);
         break;
       case "in":
         // {
@@ -909,23 +923,25 @@ class ScriptEngine {
         // }
         patchResult = relationAction(
             patchResult,
-            notAction(ce["not"], condValue.compareTo(exp) == 0),
+            notAction(ce["not"], condValue?.compareTo(exp) == 0),
             ce["relation"]);
         break;
       case "contain":
         // {
         //       "expType": "contain",
-        //       "exp": "viewthread.php",
+        //       "exp": "viewthread.php",   //  exp: [jpg, gif, bmp, png, jpeg],
         //       "source": "{system.platform}", //* 存在则优先处理
         //       "relation": "and"
         // }
         if (exp is String) {
-          patchResult = relationAction(patchResult,
-              notAction(ce["not"], condValue.contains(exp)), ce["relation"]);
+          patchResult = relationAction(
+              patchResult,
+              notAction(ce["not"], condValue?.contains(exp) ?? false),
+              ce["relation"]);
         } else if (exp is List) {
           bool listResult = false;
           exp.forEach((element) {
-            listResult = condValue.contains(element) || listResult;
+            listResult = (condValue?.contains(element) ?? false) || listResult;
           });
           patchResult = relationAction(
               patchResult, notAction(ce["not"], listResult), ce["relation"]);
@@ -944,11 +960,11 @@ class ScriptEngine {
     return patchResult;
   }
 
-  bool notAction(bool isNot, bool value) {
+  bool notAction(bool? isNot, bool value) {
     return isNot ?? false ? !value : value;
   }
 
-  bool relationAction(bool origin, bool value, String relation) {
+  bool relationAction(bool? origin, bool value, String? relation) {
     bool result;
     result = origin ?? value;
     if (relation != null) {

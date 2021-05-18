@@ -12,7 +12,7 @@ class HtmlCodec {
     "÷":"divide"
   };
 
-  Map<String, String> characterNameMap2;
+  late Map<String, String> characterNameMap2;
 
   HtmlCodec(){
     characterNameMap2={};
@@ -41,19 +41,21 @@ class HtmlCodec {
   String getName(String character)=>characterNameMap[character]!=null?"&${characterNameMap[character]};":character;
   String getByte(String character)=>"&#${character.codeUnits[0].toString()};";
 
-  String decode(String text){
+  String? decode(String? text){
     RegExp escape=RegExp(r'&([#|\w]+);');
-
+    if(text!=null){
     String decoded=text;
     while(escape.hasMatch(decoded)){
-      String findEscape=escape.firstMatch(decoded).group(1);
-      if(findEscape.startsWith("#")){
+      String? findEscape=escape.firstMatch(decoded)?.group(1)!;
+      if(findEscape!.startsWith("#")){
         decoded=decoded.replaceFirst(escape, getCharacterByByte(findEscape));
       }else{
         decoded=decoded.replaceFirst(escape, getCharacter(findEscape));
       }
     }
     return decoded;
+    }else
+      return null;
   }
 
   String encode(String text,{bool force=false}){

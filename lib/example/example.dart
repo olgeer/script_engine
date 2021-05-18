@@ -5,7 +5,7 @@ import 'package:script_engine/src/actionCollect.dart';
 import 'package:script_engine/src/logger.dart';
 
 void main(List<String> args) async{
-  initLogger(logLevel: Level.FINE);
+  initLogger(logLevel: Level.INFO);
 
   if(args.isNotEmpty) {
     String scriptPath=args[0];
@@ -14,7 +14,7 @@ void main(List<String> args) async{
     Uri script = Uri.file(scriptPath);
     // String script = readFile(scriptPath);
     if(script!=null) {
-      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: true);
+      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: false);
       // Future.delayed(Duration(milliseconds: 500),()=>se.run());
       await se.init().then((value) =>se.run());
     }else{
@@ -49,16 +49,16 @@ void showUsage(){
   logger.info("Try again.");
 }
 
-Future<String> myAction(String value, dynamic ac,
-{String debugId, bool debugMode})async{
-  String ret;
+Future<String?> myAction(String? value, dynamic ac,
+{String? debugId, bool? debugMode})async{
+  String ret="";
   switch(ac["action"]??""){
     case "lampFlash":
       print("lampFlash");
-      ret=value;
+      ret=value??"";
       break;
     default:
-      print("Unkown action");
+      print("Unkown action ${ac["action"]??""}");
   }
   return ret;
 }

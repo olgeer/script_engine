@@ -269,10 +269,11 @@
     {
       "action": "for",
       "valueName": "ipage",
-      "type": "list",
+      "type": "range",
       "list": [
         1
       ],
+      "range": [1,10],
       "loopProcess": [
         {
           "action": "callFunction",
@@ -285,7 +286,8 @@
           "action": "lampFlash"
         },
         {
-          "action": "unkown"
+          "action": "print",
+          "value": "finish"
         }
       ]
     }

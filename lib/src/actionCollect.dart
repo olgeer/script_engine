@@ -5,7 +5,7 @@ import 'package:html/dom.dart';
 import 'package:dio/dio.dart';
 import 'package:script_engine/src/logger.dart';
 
-typedef FutureCall = Future<Response> Function();
+typedef FutureCall = Future<Response?> Function();
 enum RequestMethod { get, post }
 
 List<String> domList2StrList(List<Element> domList) {
@@ -16,9 +16,9 @@ List<String> domList2StrList(List<Element> domList) {
   return retList;
 }
 
-Future<Response> callWithRetry(
-    {int retryTimes: 3, int seconds = 2, FutureCall retryCall}) async {
-  Response resp;
+Future<Response?> callWithRetry(
+    {int retryTimes: 3, int seconds = 2, required FutureCall retryCall}) async {
+  Response? resp;
   do {
     retryTimes--;
     try {
@@ -36,10 +36,10 @@ String getCurrentPath() {
   return Directory.current.path;
 }
 
-Future<Response> getUrlFile(String url,
+Future<Response?> getUrlFile(String url,
     {int retry = 3, int seconds = 3, bool debugMode = false}) async {
-  Response tmp;
-  Dio dio;
+  Response? tmp;
+  Dio? dio;
 
   if (dio == null)
     dio = Dio(BaseOptions(
@@ -67,7 +67,7 @@ Future<Response> getUrlFile(String url,
             await Future.delayed(Duration(seconds: seconds));
             break;
           case DioErrorType.response:
-            switch (e.response.statusCode) {
+            switch (e.response?.statusCode??505) {
               case 404:
                 logger.warning("$url not found. [404]");
                 retry = 0;
@@ -78,7 +78,7 @@ Future<Response> getUrlFile(String url,
                 break;
               default:
                 logger.warning(
-                    "StatusCode:[${e.response.statusCode}] get file [$url] error:$e ");
+                    "StatusCode:[${e.response?.statusCode??"505"}] get file [$url] error:$e ");
                 await Future.delayed(Duration(seconds: seconds));
                 break;
             }
@@ -90,19 +90,19 @@ Future<Response> getUrlFile(String url,
         }
       }
     }
-  } while ((tmp == null || tmp?.statusCode != 200) && --retry > 0);
+  } while ((tmp == null || (tmp.statusCode??0) != 200) && --retry > 0);
 
-  return tmp?.statusCode == 200 ? tmp : null;
+  return (tmp?.statusCode??0) == 200 ? tmp : null;
 }
 
-Future<String> saveUrlFile(String url,
-    {String saveFileWithoutExt,
+Future<String?> saveUrlFile(String url,
+    {String? saveFileWithoutExt,
     bool overwrite = false,
     int retry = 3,
     int seconds = 3}) async {
   // if (tmpResp.data > 0) {
   List<String> tmpSpile = url.split("//")[1].split("/");
-  String fileExt;
+  String? fileExt;
   if (tmpSpile.last.length > 0 && tmpSpile.last.split(".").length > 1) {
     if (saveFileWithoutExt == null || saveFileWithoutExt.length == 0) {
       saveFileWithoutExt = getCurrentPath() + "/" + tmpSpile.last.split(".")[0];
@@ -119,10 +119,10 @@ Future<String> saveUrlFile(String url,
     urlFile.deleteSync();
   }
   if (!urlFile.existsSync()) {
-    Response tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
+    Response? tmpResp = await getUrlFile(url, retry: retry, seconds: seconds);
     if (tmpResp != null) {
       if (fileExt == null) {
-        fileExt = tmpResp.headers.value('Content-Type').split("/")[1];
+        fileExt = tmpResp.headers.value('Content-Type')?.split("/")[1];
       }
       urlFile.createSync(recursive: true);
       urlFile.writeAsBytesSync(tmpResp.data.toList(),
@@ -139,18 +139,18 @@ Future<String> saveUrlFile(String url,
   return urlFile.path;
 }
 
-Future<String> getHtml(String sUrl,
-    {Map<String, dynamic> headers,
-    Map<String, dynamic> queryParameters,
-    String body,
+Future<String?> getHtml(String sUrl,
+    {Map<String, dynamic>? headers,
+    Map<String, dynamic>? queryParameters,
+    String? body,
     RequestMethod method = RequestMethod.get,
     Encoding encoding = utf8,
     int retryTimes = 3,
     int seconds = 5,
-    String debugId,
+    String? debugId,
     bool debugMode = false}) async {
-  Dio dio;
-  String html;
+  Dio? dio;
+  String? html;
   // Logger().debug("getHtml-[${debugId ?? ""}]", "Ready getHtml: [$sUrl]");
 
   if (dio == null)
@@ -163,30 +163,30 @@ Future<String> getHtml(String sUrl,
     dio.interceptors.add(LogInterceptor(request: true, responseHeader: true));
 
   if (sUrl != null) {
-    Response listResp = await callWithRetry(
+    Response? listResp = await callWithRetry(
         seconds: seconds,
         retryTimes: retryTimes,
         retryCall: () async {
           try {
             if (method == RequestMethod.get) {
-              return await dio.get(sUrl,
+              return await dio!.get(sUrl,
                   queryParameters: queryParameters,
                   options: Options(
                       headers: headers, responseType: ResponseType.bytes));
             } else {
-              return await dio.post(sUrl,
+              return await dio!.post(sUrl,
                   queryParameters: queryParameters,
                   options: Options(
                       headers: headers, responseType: ResponseType.bytes),
                   data: body);
             }
           } catch (e) {
-            if (e is DioError && e.response?.statusCode == 302) {
+            if (e is DioError && e.response?.statusCode == 302 && e.response?.headers["location"]!=null) {
               try {
                 String newUrl =
-                    "${getDomain(sUrl)}${e.response.headers["location"].first}";
+                    "${getDomain(sUrl)}${e.response?.headers["location"]?.first}";
                 logger.finer("status code:302 and redirect to $newUrl");
-                return await dio.get(newUrl,
+                return await dio!.get(newUrl,
                     options: Options(responseType: ResponseType.bytes));
               } catch (e) {
                 print(e);
@@ -200,7 +200,7 @@ Future<String> getHtml(String sUrl,
         });
 
     if (listResp?.statusCode == 200) {
-      html = encoding.decode(listResp.data);
+      html = encoding.decode(listResp?.data);
     }
   }
   return html;
@@ -237,8 +237,8 @@ String getDomain(String url) {
   return url.replaceAll(url.split("/").last, "");
 }
 
-String readFile(dynamic file) {
-  File readFile;
+String? readFile(dynamic file) {
+  late File readFile;
   if (file is String) readFile = File(file);
   if (file is File) readFile = file;
   if (readFile.existsSync()) {
@@ -256,12 +256,12 @@ void saveFile(String filename, String content,
   File saveFile = File(filename);
   if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
 
-  saveFile.writeAsStringSync(content ?? "",
+  saveFile.writeAsStringSync(content,
       mode: fileMode, encoding: encoding, flush: true);
 }
 
 String shortString(String content, {int limit = 200}) {
-  String ret = content ?? "";
+  String ret = content;
   if (ret.length > limit) ret = "${ret.substring(0, limit)} ... ";
   return ret;
 }
