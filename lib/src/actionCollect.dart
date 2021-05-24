@@ -78,14 +78,14 @@ Future<Response?> getUrlFile(String url,
                 break;
               default:
                 logger.warning(
-                    "StatusCode:[${e.response?.statusCode??"505"}] get file [$url] error:$e ");
+                    "StatusCode:[${e.response?.statusCode??"505"}] get file [$url] error:${e.message} ");
                 await Future.delayed(Duration(seconds: seconds));
                 break;
             }
             break;
           default:
             logger.warning(
-                "DioErrorType : ${e.type}], get file [$url] error : $e");
+                "DioErrorType : ${e.type}], get file [$url] error : ${e.message}");
             await Future.delayed(Duration(seconds: seconds));
         }
       }

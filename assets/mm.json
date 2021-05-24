@@ -258,7 +258,7 @@
             {
               "action": "saveUrlFile",
               "url": "{this}",
-              "fileName": "{system.currentdir}/../../temp/mm/{postdate}/{tid}-{title}/{picname}"
+              "fileName": "/Users/max/Downloads/temp/mm/{postdate}/{tid}-{title}/{picname}"
             }
           ]
         }
@@ -269,9 +269,9 @@
     {
       "action": "for",
       "valueName": "ipage",
-      "type": "range",
+      "type": "list",
       "list": [
-        1
+        1,2
       ],
       "range": [1,10],
       "loopProcess": [

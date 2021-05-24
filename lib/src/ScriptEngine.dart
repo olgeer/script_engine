@@ -445,15 +445,22 @@ class ScriptEngine {
             Encoding encoding =
                 "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
 
-            Map<String, dynamic> queryParameters =
-                Map.castFrom(ac["queryParameters"] ?? {});
-            queryParameters.forEach((key, value) async {
-              if (value is String) {
-                queryParameters[key] = Uri.encodeQueryComponent(
-                    exchgValue(value)!,
-                    encoding: encoding);
-              }
-            });
+            // Map<String, dynamic> queryParameters =
+            //     Map.castFrom(ac["queryParameters"] ?? {});
+            // queryParameters.forEach((key, value) async {
+            //   if (value is String) {
+            //     queryParameters[key] = Uri.encodeQueryComponent(
+            //         exchgValue(value)!,
+            //         encoding: encoding);
+            //   }
+            // });
+            Map<String, dynamic> queryParameters = {};
+            var scriptQueryParameters = ac["queryParameters"]??{};
+            if(scriptQueryParameters is Map){
+              scriptQueryParameters.forEach((key, value) {
+                queryParameters[key]=value is String?Uri.encodeQueryComponent(exchgValue(value)!,encoding: encoding):value;
+              });
+            }
 
             Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
 
@@ -583,7 +590,7 @@ class ScriptEngine {
               case "list":
                 if (ac["list"] != null) {
                   for (int i in ac["list"]) {
-                    setValue(ac["valueName"], i);
+                    setValue(ac["valueName"], i.toString());
                     ret = await singleProcess(value, loopCfg);
                   }
                 }
@@ -638,7 +645,7 @@ class ScriptEngine {
             if (ac["parameters"] != null && ac["parameters"] is Map) {
               Map<String, dynamic> params = Map.castFrom(ac["parameters"]);
               params.forEach((key, value) {
-                setValue(key, value);
+                setValue(key, exchgValue(value));
               });
             }
             ret = await singleProcess(
