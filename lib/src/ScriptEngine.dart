@@ -206,11 +206,11 @@ class ScriptEngine {
   }
 
   void setValue(String key, dynamic value) {
-    if (tValue[key] != null) {
+    // if (tValue[key] != null) {
       tValue[key] = value;
-    } else {
-      tValue.putIfAbsent(key, () => value);
-    }
+    // } else {
+    //   tValue.putIfAbsent(key, () => value);
+    // }
     logger.finer("Set value($key) to $value");
   }
 
