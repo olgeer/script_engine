@@ -211,7 +211,7 @@ class ScriptEngine {
     // } else {
     //   tValue.putIfAbsent(key, () => value);
     // }
-    logger.finer("Set value($key) to $value");
+    if(debugMode)logger.finer("Set value($key) to $value");
   }
 
   String removeValue(String key) => tValue.remove(key);
@@ -589,17 +589,35 @@ class ScriptEngine {
             switch (ac["type"]) {
               case "list":
                 if (ac["list"] != null) {
-                  for (int i in ac["list"]) {
-                    setValue(ac["valueName"], i.toString());
-                    ret = await singleProcess(value, loopCfg);
+                  var listVar=ac["list"];
+                  if(listVar is String){
+                    for (String i in exchgValue(listVar)!.split(",")) {
+                      setValue(ac["valueName"], i);
+                      ret = await singleProcess(value, loopCfg);
+                    }
+                  }
+                  if(listVar is List){
+                    for (int i in listVar) {
+                      setValue(ac["valueName"], i.toString());
+                      ret = await singleProcess(value, loopCfg);
+                    }
                   }
                 }
                 break;
               case "range":
                 if (ac["range"] != null) {
-                  for (int i = ac["range"][0]; i < ac["range"][1]; i++) {
-                    setValue(ac["valueName"], i.toString());
-                    ret = await singleProcess(value, loopCfg);
+                  var rangeVar=ac["range"];
+                  if(rangeVar is List){
+                    for (int i = rangeVar[0]; i < rangeVar[1]; i++) {
+                      setValue(ac["valueName"], i.toString());
+                      ret = await singleProcess(value, loopCfg);
+                    }
+                  }
+                  if(rangeVar is String){
+                    for (int i = int.tryParse(exchgValue(rangeVar)!.split(",")[0])??1; i < (int.tryParse(exchgValue(rangeVar)!.split(",")[1])??1); i++) {
+                      setValue(ac["valueName"], i.toString());
+                      ret = await singleProcess(value, loopCfg);
+                    }
                   }
                 }
                 break;

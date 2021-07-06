@@ -2,7 +2,9 @@
   "processName": "testProc",
   "globalValue": {
     "url": "http://www.sunsmm.com",
-    "encoding": "gbk"
+    "encoding": "gbk",
+    "getPageList": "1,2,3",
+    "getPageRange": "1,10"
   },
   "functionDefine": {
     "getPage": {
@@ -258,7 +260,7 @@
             {
               "action": "saveUrlFile",
               "url": "{this}",
-              "fileName": "/Users/max/Downloads/temp/mm/{postdate}/{tid}-{title}/{picname}"
+              "fileName": "{macos.downloadDir}/mm/{postdate}/{tid}-{title}/{picname}"
             }
           ]
         }
@@ -270,10 +272,8 @@
       "action": "for",
       "valueName": "ipage",
       "type": "list",
-      "list": [
-        1,2
-      ],
-      "range": [1,10],
+      "list": "{getPageList}",
+      "range": "{getPageRange}",
       "loopProcess": [
         {
           "action": "callFunction",
