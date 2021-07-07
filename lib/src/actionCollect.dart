@@ -193,7 +193,7 @@ Future<String?> getHtml(String sUrl,
                 return null;
               }
             } else {
-              print(e);
+              // print(e);
               return null;
             }
           }
@@ -253,7 +253,10 @@ String? readFile(dynamic file) {
 
 void saveFile(String filename, String content,
     {FileMode fileMode = FileMode.append, Encoding encoding = utf8}) {
+  logger.finer("Save file:$filename");
+
   File saveFile = File(filename);
+
   if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
 
   saveFile.writeAsStringSync(content,
