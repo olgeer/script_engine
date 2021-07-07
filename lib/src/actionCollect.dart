@@ -123,7 +123,11 @@ Future<String?> saveUrlFile(String url,
     if (tmpResp != null) {
       if (fileExt == null) {
         fileExt = tmpResp.headers.value('Content-Type')?.split("/")[1];
+        urlFile = File("$saveFileWithoutExt.${fileExt ?? ""}");
       }
+
+      logger.finer("File:${urlFile.path}");
+
       urlFile.createSync(recursive: true);
       urlFile.writeAsBytesSync(tmpResp.data.toList(),
           mode: FileMode.write, flush: true);
