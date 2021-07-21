@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:dio/adapter.dart';
 import 'package:html/dom.dart';
 import 'package:dio/dio.dart';
 import 'package:script_engine/src/logger.dart';
@@ -165,6 +166,13 @@ Future<String?> getHtml(String sUrl,
 
   if (debugMode)
     dio.interceptors.add(LogInterceptor(request: true, responseHeader: true));
+
+  //解决ssl证书过期无法访问的问题
+  (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client){
+    client.badCertificateCallback=(cert, host, port){
+      return true;
+    };
+  };
 
   if (sUrl != null) {
     Response? listResp = await callWithRetry(

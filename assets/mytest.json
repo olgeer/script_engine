@@ -1,9 +1,23 @@
 {
   "processName": "testProc",
+  "globalValue": {
+    "url": "https://www.boy5.com",
+    "encoding": "utf8",
+    "searchkey": "围城"
+  },
   "beginSegment": [
     {
       "action": "getValue",
       "exp": "{android.applicationDir} - hello world"
+    },
+    {
+      "action": "print"
+    },
+    {
+      "action": "getHtml",
+      "url": "{url}/modules/article/search.php?searchkey={searchkey}",
+      "method": "get",
+      "charset": "utf8"
     },
     {
       "action": "print"
