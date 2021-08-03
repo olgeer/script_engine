@@ -16,7 +16,9 @@ void main(List<String> args) async{
     if(script!=null) {
       ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: false);
       // Future.delayed(Duration(milliseconds: 500),()=>se.run());
-      await se.init().then((value) =>se.run());
+      String? result;
+      await se.init().then((value)async =>result=await se.run());
+      logger.info(result);
     }else{
       logger.warning("Cannot found script file");
       showUsage();

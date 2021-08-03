@@ -395,10 +395,12 @@ class ScriptEngine {
           //               "action": "saveFile",
           //               "fileName": "{basePath}/file1.txt",
           //               "saveContent": "{title}\n\r{content}"
+          //               "mode": "append"//默认  可选"overwrite"
           //             },
           if (ac["fileName"] != null) {
+            FileMode fileMode=((ac["mode"] ?? "append") as String).compareTo("append")==0?FileMode.append:FileMode.write;
             saveFile(exchgValue(ac["fileName"])!,
-                exchgValue(ac["saveContent"]) ?? value ?? "");
+                exchgValue(ac["saveContent"]) ?? value ?? "",fileMode: fileMode);
           }
           refreshValue = false;
           break;

@@ -7,7 +7,7 @@ packages:
       name: async
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "2.5.0"
+    version: "2.6.1"
   boolean_selector:
     dependency: transitive
     description:
@@ -74,9 +74,11 @@ packages:
   fast_gbk:
     dependency: "direct main"
     description:
-      name: fast_gbk
-      url: "https://pub.flutter-io.cn"
-    source: hosted
+      path: "."
+      ref: HEAD
+      resolved-ref: c1cf9595ad3117bd9b912e96b2ea9c0772af7d6b
+      url: "https://github.com/lixiangthinker/fast_gbk.git"
+    source: git
     version: "1.0.0-rc"
   flutter:
     dependency: "direct main"
@@ -141,7 +143,7 @@ packages:
       name: source_span
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "1.8.0"
+    version: "1.8.1"
   stack_trace:
     dependency: transitive
     description:
@@ -176,7 +178,7 @@ packages:
       name: test_api
       url: "https://pub.flutter-io.cn"
     source: hosted
-    version: "0.2.19"
+    version: "0.3.0"
   typed_data:
     dependency: transitive
     description:

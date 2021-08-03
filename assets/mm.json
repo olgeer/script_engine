@@ -6,6 +6,31 @@
     "getPageList": "1,2,3",
     "getPageRange": "1,10"
   },
+  "beginSegment": [
+    {
+      "action": "for",
+      "valueName": "ipage",
+      "type": "list",
+      "list": "{getPageList}",
+      "range": "{getPageRange}",
+      "loopProcess": [
+        {
+          "action": "callFunction",
+          "functionName": "getPage",
+          "parameters": {
+            "page": "{ipage}"
+          }
+        },
+        {
+          "action": "lampFlash"
+        },
+        {
+          "action": "print",
+          "value": "finish"
+        }
+      ]
+    }
+  ],
   "functionDefine": {
     "getPage": {
       "parameters": [
@@ -266,30 +291,6 @@
         }
       ]
     }
-  },
-  "beginSegment": [
-    {
-      "action": "for",
-      "valueName": "ipage",
-      "type": "list",
-      "list": "{getPageList}",
-      "range": "{getPageRange}",
-      "loopProcess": [
-        {
-          "action": "callFunction",
-          "functionName": "getPage",
-          "parameters": {
-            "page": "{ipage}"
-          }
-        },
-        {
-          "action": "lampFlash"
-        },
-        {
-          "action": "print",
-          "value": "finish"
-        }
-      ]
-    }
-  ]
+  }
+
 }

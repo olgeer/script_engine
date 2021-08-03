@@ -1,0 +1,165 @@
+{
+  "processName": "getSuggestList",
+  "globalValue": {
+    "baseUrl": "https://www.yqzww.cc/",
+    "urlList": "xuanhuan,dushi,wuxia,lishi,kehuan,kongbu",
+    "encoding": "gbk"
+  },
+  "beginSegment": [
+    {
+      "action": "for",
+      "valueName": "urltype",
+      "type": "list",
+      "list": "{urlList}",
+      "loopProcess": [
+        {
+          "action": "callFunction",
+          "functionName": "searchNovel",
+          "parameters": {
+            "url": "{urltype}"
+          }
+        }
+      ]
+    }
+  ],
+  "functionDefine": {
+    "searchNovel": {
+      "parameters": [
+        "url"
+      ],
+      "process": [
+        {
+          "action": "getHtml",
+          "url": "{baseUrl}{url}/",
+          "method": "get",
+          "charset": "gbk"
+        },
+        {
+          "action": "selector",
+          "type": "dom",
+          "script": "div.r"
+        },
+        {
+          "action": "callMultiProcess",
+          "multiProcess": [
+            {
+              "action": "multiSelector",
+              "type": "xpath",
+              "script": "//ul/li"
+            },
+            {
+              "action": "foreach",
+              "eachProcess": [
+                {
+                  "action": "setValue",
+                  "valueName": "novelName",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "xpath",
+                      "script": "//span[2]/a/text()"
+                    }
+                  ]
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "writer",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "xpath",
+                      "script": "//span[3]/text()"
+                    }
+                  ]
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "novelurl",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "xpath",
+                      "script": "//span[2]/a/@href"
+                    }
+                  ]
+                },
+                {
+                  "action": "getHtml",
+                  "url": "{novelurl}",
+                  "method": "get",
+                  "charset": "gbk"
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "coverUrl",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "dom",
+                      "script": "[property=\"og:image\"]",
+                      "property": "content"
+                    }
+                  ]
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "lastChapter",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "dom",
+                      "script": "[property=\"og:novel:latest_chapter_name\"]",
+                      "property": "content"
+                    }
+                  ]
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "describe",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "dom",
+                      "script": "[property=\"og:description\"]",
+                      "property": "content"
+                    }
+                  ]
+                },
+                {
+                  "action": "setValue",
+                  "valueName": "lastUpdate",
+                  "valueProcess": [
+                    {
+                      "action": "selector",
+                      "type": "dom",
+                      "script": "[property=\"og:novel:update_time\"]",
+                      "property": "content"
+                    }
+                  ]
+                },
+                {
+                  "action": "getValue",
+                  "exp": "\"source\":\"推荐源\",\"novelName\":\"{novelName}\",\"writer\":\"{writer}\",\"novelHome\":\"{novelurl}\",\"coverUrl\":\"{coverUrl}\",\"lastUpdate\":\"{lastUpdate}\",\"lastChapter\":\"{lastChapter}\",\"describe\":\"{describe}\""
+                },
+                {
+                  "action": "concat",
+                  "front": "{",
+                  "back": "}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "action": "saveFile",
+          "fileName": "{system.currentdir}/assets/{url}list.json",
+          "mode": "overwrite"
+        },
+        {
+          "action": "print",
+          "value": "{system.currentdir}/assets/{url}list.json is saved !"
+        }
+      ]
+    }
+  }
+}
