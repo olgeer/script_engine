@@ -228,7 +228,7 @@ class ScriptEngine {
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null && (getValue(RETURNCODE) ?? 1) != 0) {
-          logger.warning(
+          logger.fine(
               "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
         }
@@ -238,7 +238,7 @@ class ScriptEngine {
       setValue(SINGLERESULT, value);
       return value;
     } else {
-      logger.warning(
+      logger.fine(
           "----[procCfg is null,Abort this singleProcess! Please check !");
       return null;
     }
