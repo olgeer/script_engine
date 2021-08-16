@@ -14,7 +14,7 @@ typedef multiAction = Future<List<String?>> Function(
     {String? debugId, bool? debugMode});
 typedef valueProvider = String Function(String exp);
 typedef actionEvent = Future<void> Function(
-    dynamic value, dynamic ac, dynamic? ret, String debugId);
+    dynamic value, dynamic ac, dynamic ret, String debugId);
 enum ScriptEngineState { Initing, Ready, Running, Done }
 
 class ScriptEngine {
@@ -218,7 +218,7 @@ class ScriptEngine {
 
   dynamic getValue(String key) => tValue[key];
 
-  Future<String?> singleProcess(String? value, dynamic? procCfg) async {
+  Future<String?> singleProcess(String? value, dynamic procCfg) async {
     if (procCfg != null) {
       String debugId = genKey(lenght: 8);
 
@@ -228,7 +228,7 @@ class ScriptEngine {
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null && (getValue(RETURNCODE) ?? 1) != 0) {
-          logger.fine(
+          if (debugMode)logger.fine(
               "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
         }
@@ -238,7 +238,7 @@ class ScriptEngine {
       setValue(SINGLERESULT, value);
       return value;
     } else {
-      logger.fine(
+      if (debugMode)logger.fine(
           "----[procCfg is null,Abort this singleProcess! Please check !");
       return null;
     }
