@@ -4,17 +4,8 @@ a json script engine to do anything
 
 ## Getting Started
 
-This project is a starting point for a Dart
-[package](https://flutter.dev/developing-packages/),
-a library module containing code that can be shared easily across
-multiple Flutter or Dart projects.
-
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
-
 脚本结构：
-'''
+
 {
     "processName": "testProc",
     "globalValue": {
@@ -41,7 +32,7 @@ samples, guidance on mobile development, and a full API reference.
         }
     ]
 }
-'''
+
 
 其中 beginSegment 为此脚本的执行入口，引擎将顺序执行脚本直至结束。
 globalValue 为全局变量定义，全局生效。
@@ -52,6 +43,7 @@ globalValue 为全局变量定义，全局生效。
 部分单线命令会内嵌多线命令，也有多线命令内嵌单线命令的情况，后续会进行说明。
 
 单线命令列表：
+
 print   日志打印，默认打印value的值到日志；
         如使用value制定打印内容，则按指定内容输出到日志，可采用{}形式调用参数
 '''
