@@ -267,7 +267,7 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          ret = value?.replaceAll(RegExp(ac["from"]), ac["to"]);
+          ret = value?.replaceAll(RegExp(ac["from"]), exchgValue(ac["to"])??"");
           break;
         case "substring":
           //             {
