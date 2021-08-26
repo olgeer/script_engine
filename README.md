@@ -46,6 +46,8 @@ globalValue 为全局变量定义，全局生效。
 
 ## 单线命令列表：
 
+### 字符串操作  
+
 **print**   日志打印，默认打印value的值到日志；
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|-----|----
@@ -118,6 +120,8 @@ index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为
 }
 ```
 
+### 变量操作  
+
 **setValue**   保存变量，此命令不会影响当前value
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
@@ -186,6 +190,85 @@ keyName | 键值名 | 字符 | 否 | 否 | 无
 {
     "action": "json",
     "keyName": "pageUrl"
+}
+```
+
+### 文件操作  
+
+**readFile**   读取文件内容到变量
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
+toValue | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前value
+```
+{
+    "action": "readFile",
+    "fileName": "{basePath}/file1.txt",
+    "toValue": "txtfile"
+}
+```
+
+**saveFile**   保存内容到本地文件
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
+saveContent | 保存内容 | 字符 | 否 | 可 | 无
+mode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，默认为"append"
+```
+{
+    "action": "saveFile",
+    "fileName": "{basePath}/file1.txt",
+    "saveContent": "{title}\n\r{content}"
+    "mode": "append"
+}
+```
+
+**saveFile**   保存网络文件内容到本地
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
+url | 文件url | 字符 | 否 | 可 | 无
+overwrite | 重写模式 | 布尔型 | 可 | 否 | 默认为false
+```
+{
+    "action": "saveUrlFile",
+    "fileName": "{basePath}/file1.jpg",
+    "url": "http://pic.baidu.com/sample.jpg",
+    "overwrite": true    //* 默认为false
+}
+```
+
+**getHtml**   获取网页到当前value
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+url | 网页url | 字符 | 否 | 可 | 无
+method | 请求方式 | 字符 | 可 | 否 | 默认为"get"
+charset | 编码方式 | 字符 | 可 | 否 | 默认为"utf8"
+headers | 请求头 | 键对 | 可 | 否 | 默认为空对象{}
+body | 请求体 | 字符 | 可 | 可 | 支持"get"和"post"，默认为"get"
+queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
+```
+{
+    "action": "getHtml",
+    "url": "{url}/modules/article/search.php",
+    "method": "get",
+    "charset": "gbk",
+    "queryParameters": {
+        "searchtype": "articlename",
+        "searchkey": "{searchkey}"
+    },
+    "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+    },
+    "body": "searchtype=all&searchkey={searchkey}",
+
+}
+```
+
+**htmlDecode**   对当前value做html标识转换，把&lt;形式转化为"<"
+```
+{
+    "action": "htmlDecode"
 }
 ```
 
