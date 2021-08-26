@@ -582,11 +582,12 @@ class ScriptEngine {
           //   "action": "for",
           //   "valueName": "ipage",
           //   "type": "list",
-          //   "range": [1,10],     //*
-          //   "list": [1,2,4,5,7], //*
+          //   "range": [1,10],     // as String "1,10"
+          //   "list": [1,2,4,5,7], // as String "1,2,3,4"
           //   "loopProcess": []
           // }
           var loopCfg = ac["loopProcess"];
+          List<String> retList= [];
           if (loopCfg != null && (ac["list"] != null || ac["range"] != null)) {
             switch (ac["type"]) {
               case "list":
@@ -595,13 +596,13 @@ class ScriptEngine {
                   if(listVar is String){
                     for (String i in exchgValue(listVar)!.split(",")) {
                       setValue(ac["valueName"], i);
-                      ret = await singleProcess(value, loopCfg);
+                      retList.add(await singleProcess(value, loopCfg)??"");
                     }
                   }
                   if(listVar is List){
                     for (int i in listVar) {
                       setValue(ac["valueName"], i.toString());
-                      ret = await singleProcess(value, loopCfg);
+                      retList.add(await singleProcess(value, loopCfg)??"");
                     }
                   }
                 }
@@ -612,19 +613,20 @@ class ScriptEngine {
                   if(rangeVar is List){
                     for (int i = rangeVar[0]; i < rangeVar[1]; i++) {
                       setValue(ac["valueName"], i.toString());
-                      ret = await singleProcess(value, loopCfg);
+                      retList.add(await singleProcess(value, loopCfg)??"");
                     }
                   }
                   if(rangeVar is String){
                     for (int i = int.tryParse(exchgValue(rangeVar)!.split(",")[0])??1; i < (int.tryParse(exchgValue(rangeVar)!.split(",")[1])??1); i++) {
                       setValue(ac["valueName"], i.toString());
-                      ret = await singleProcess(value, loopCfg);
+                      retList.add(await singleProcess(value, loopCfg)??"");
                     }
                   }
                 }
                 break;
             }
           }
+          ret=retList.toString();
           break;
 
         ///条件分支执行
