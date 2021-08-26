@@ -269,6 +269,37 @@ class ScriptEngine {
           //             },
           ret = value?.replaceAll(RegExp(ac["from"]), ac["to"]);
           break;
+        case "substring":
+          //             {
+          //               "action": "substring",
+          //               "start": 2,  // 为null 则 从0开始，如果为 负数 则从后面算起，如 "abcde" ,-2则指从'd'起
+          //               "end": 10,   // 为null 则 到结尾，当end值小于begin值时，两值对调，如为负数则从开始算起
+          //               "length": 4  // 当end为null时，解释此参数，如亦为null则忽略此逻辑
+          //             },
+          if(value!=null) {
+            int start = int.tryParse(ac["start"] ?? "0") ?? 0;
+            int? end = int.tryParse(ac["end"]);
+            int? length = int.tryParse(ac["length"]);
+            if(end==null && length==null){
+              ret = value.substring(start);
+            }else{
+              if(start<0)start=value.length+start;
+              if(start<0 || start>value.length)start=0;
+
+              if(end==null)end=start+length!;
+
+              if(end<0)end=value.length+end;
+              if(end<start){
+                int temp=start;
+                start=end;
+                end=temp;
+              }
+              ret = value.substring(start,end);
+            }
+          }else{
+            ret=value;
+          }
+          break;
         case "htmlDecode":
           //           {
           //             "action": "htmlDecode"
