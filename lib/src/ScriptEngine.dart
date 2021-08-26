@@ -148,6 +148,7 @@ class ScriptEngine {
   void clear() {
     tValue.clear();
     tStack.clear();
+    reloadGlobalValue();
     logger.fine("$processName is clear.");
   }
 
@@ -207,11 +208,11 @@ class ScriptEngine {
 
   void setValue(String key, dynamic value) {
     // if (tValue[key] != null) {
-      tValue[key] = value;
+    tValue[key] = value;
     // } else {
     //   tValue.putIfAbsent(key, () => value);
     // }
-    if(debugMode)logger.finer("Set value($key) to $value");
+    if (debugMode) logger.finer("Set value($key) to $value");
   }
 
   String removeValue(String key) => tValue.remove(key);
@@ -228,8 +229,9 @@ class ScriptEngine {
         setValue("this", value);
         value = await action(value, act, debugId: debugId);
         if (value == null && (getValue(RETURNCODE) ?? 1) != 0) {
-          if (debugMode)logger.fine(
-              "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
+          if (debugMode)
+            logger.fine(
+                "--$debugId--[Return null,Abort this singleProcess! Please check singleAction($act,$preErrorProc)");
           break;
         }
       }
@@ -238,8 +240,9 @@ class ScriptEngine {
       setValue(SINGLERESULT, value);
       return value;
     } else {
-      if (debugMode)logger.fine(
-          "----[procCfg is null,Abort this singleProcess! Please check !");
+      if (debugMode)
+        logger.fine(
+            "----[procCfg is null,Abort this singleProcess! Please check !");
       return null;
     }
   }
@@ -267,7 +270,8 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          ret = value?.replaceAll(RegExp(ac["from"]), exchgValue(ac["to"])??"");
+          ret =
+              value?.replaceAll(RegExp(ac["from"]), exchgValue(ac["to"]) ?? "");
           break;
         case "substring":
           //             {
@@ -276,35 +280,29 @@ class ScriptEngine {
           //               "end": 10,   // 为null 则 到结尾，当end值小于begin值时，两值对调，如为负数则从开始算起
           //               "length": 4  // 当end为null时，解释此参数，如亦为null则忽略此逻辑
           //             },
-          if(value!=null) {
+          if (value != null) {
             int start = int.tryParse(ac["start"] ?? "0") ?? 0;
             int? end = int.tryParse(ac["end"]);
             int? length = int.tryParse(ac["length"]);
-            if(end==null && length==null){
+            if (end == null && length == null) {
               ret = value.substring(start);
-            }else{
-              if(start<0)start=value.length+start;
-              if(start<0 || start>value.length)start=0;
+            } else {
+              if (start < 0) start = value.length + start;
+              if (start < 0 || start > value.length) start = 0;
 
-              if(end==null)end=start+length!;
+              if (end == null) end = start + length!;
 
-              if(end<0)end=value.length+end;
-              if(end<start){
-                int temp=start;
-                start=end;
-                end=temp;
+              if (end < 0) end = value.length + end;
+              if (end < start) {
+                int temp = start;
+                start = end;
+                end = temp;
               }
-              ret = value.substring(start,end);
+              ret = value.substring(start, end);
             }
-          }else{
-            ret=value;
+          } else {
+            ret = value;
           }
-          break;
-        case "htmlDecode":
-          //           {
-          //             "action": "htmlDecode"
-          //           }
-          ret = HtmlCodec().decode(value);
           break;
         case "concat":
           //           {
@@ -324,19 +322,26 @@ class ScriptEngine {
           //               "pattern": "cid=",
           //               "index": 1
           //             },
-          if (ac["index"] is int)
-            ret = value?.split(ac["pattern"])[ac["index"]];
-          else if (ac["index"] is String) {
-            switch (ac["index"]) {
-              case "first":
-                ret = value?.split(ac["pattern"]).first;
-                break;
-              case "last":
-                ret = value?.split(ac["pattern"]).last;
-                break;
-              default:
-                break;
+          try {
+            if (ac["index"] is int) {
+              ret = value
+                  ?.split(exchgValue(ac["pattern"]) ?? "")
+                  .elementAt(ac["index"] ?? 0);
+            } else if (ac["index"] is String) {
+              switch (ac["index"]) {
+                case "first":
+                  ret = value?.split(exchgValue(ac["pattern"]) ?? "").first;
+                  break;
+                case "last":
+                  ret = value?.split(exchgValue(ac["pattern"]) ?? "").last;
+                  break;
+                default:
+                  ret = value;
+                  break;
+              }
             }
+          } catch (e) {
+            ret = "";
           }
           break;
         case "trim":
@@ -356,7 +361,7 @@ class ScriptEngine {
           if (ac["valueName"] != null) {
             setValue(
                 ac["valueName"],
-                ac["value"] ??
+                exchgValue(ac["value"]) ??
                     await singleProcess(value, ac["valueProcess"] ?? []));
           }
           refreshValue = false;
@@ -367,8 +372,8 @@ class ScriptEngine {
           //              "value": "url",   //*
           //              "exp": "{novelName}-{writer}"   //*
           //            }
-          //            value和valueName两者只有其中一个生效，value的优先级更高
-          ret = exchgValue(ac["exp"]) ?? getValue(ac["value"]);
+          //            value和exp两者只有其中一个生效，exp的优先级更高
+          ret = exchgValue(ac["exp"]) ?? getValue(ac["value"]??"");
           break;
         case "removeValue":
           //            {
@@ -403,8 +408,15 @@ class ScriptEngine {
           //               "action": "json",
           //               "keyName": "info"
           //             },
-          if (ac["keyName"] != null && value != null)
-            ret = jsonDecode(value)[ac["keyName"]];
+          if (ac["keyName"] != null && value != null) {
+            try {
+              ret = jsonDecode(value)[ac["keyName"]];
+            } catch (e) {
+              ret = "";
+            }
+          }else{
+            ret = "";
+          }
           break;
         case "readFile":
           //            {
@@ -429,9 +441,13 @@ class ScriptEngine {
           //               "mode": "append"//默认  可选"overwrite"
           //             },
           if (ac["fileName"] != null) {
-            FileMode fileMode=((ac["mode"] ?? "append") as String).compareTo("append")==0?FileMode.append:FileMode.write;
+            FileMode fileMode =
+                ((ac["mode"] ?? "append") as String).compareTo("append") == 0
+                    ? FileMode.append
+                    : FileMode.write;
             saveFile(exchgValue(ac["fileName"])!,
-                exchgValue(ac["saveContent"]) ?? value ?? "",fileMode: fileMode);
+                exchgValue(ac["saveContent"]) ?? value ?? "",
+                fileMode: fileMode);
           }
           refreshValue = false;
           break;
@@ -488,10 +504,13 @@ class ScriptEngine {
             //   }
             // });
             Map<String, dynamic> queryParameters = {};
-            var scriptQueryParameters = ac["queryParameters"]??{};
-            if(scriptQueryParameters is Map){
+            var scriptQueryParameters = ac["queryParameters"] ?? {};
+            if (scriptQueryParameters is Map) {
               scriptQueryParameters.forEach((key, value) {
-                queryParameters[key]=value is String?Uri.encodeQueryComponent(exchgValue(value)!,encoding: encoding):value;
+                queryParameters[key] = value is String
+                    ? Uri.encodeQueryComponent(exchgValue(value)!,
+                        encoding: encoding)
+                    : value;
               });
             }
 
@@ -513,6 +532,12 @@ class ScriptEngine {
           } else {
             logger.warning("url is null");
           }
+          break;
+        case "htmlDecode":
+          //           {
+          //             "action": "htmlDecode"
+          //           }
+          ret = HtmlCodec().decode(value);
           break;
         case "selector":
           switch (ac["type"]) {
@@ -618,46 +643,53 @@ class ScriptEngine {
           //   "loopProcess": []
           // }
           var loopCfg = ac["loopProcess"];
-          List<String> retList= [];
+          List<String> retList = [];
           if (loopCfg != null && (ac["list"] != null || ac["range"] != null)) {
             switch (ac["type"]) {
               case "list":
                 if (ac["list"] != null) {
-                  var listVar=ac["list"];
-                  if(listVar is String){
+                  var listVar = ac["list"];
+                  if (listVar is String) {
                     for (String i in exchgValue(listVar)!.split(",")) {
                       setValue(ac["valueName"], i);
-                      retList.add(await singleProcess(value, loopCfg)??"");
+                      retList.add(await singleProcess(value, loopCfg) ?? "");
                     }
                   }
-                  if(listVar is List){
+                  if (listVar is List) {
                     for (int i in listVar) {
                       setValue(ac["valueName"], i.toString());
-                      retList.add(await singleProcess(value, loopCfg)??"");
+                      retList.add(await singleProcess(value, loopCfg) ?? "");
                     }
                   }
                 }
                 break;
               case "range":
                 if (ac["range"] != null) {
-                  var rangeVar=ac["range"];
-                  if(rangeVar is List){
+                  var rangeVar = ac["range"];
+                  if (rangeVar is List) {
                     for (int i = rangeVar[0]; i < rangeVar[1]; i++) {
                       setValue(ac["valueName"], i.toString());
-                      retList.add(await singleProcess(value, loopCfg)??"");
+                      retList.add(await singleProcess(value, loopCfg) ?? "");
                     }
                   }
-                  if(rangeVar is String){
-                    for (int i = int.tryParse(exchgValue(rangeVar)!.split(",")[0])??1; i < (int.tryParse(exchgValue(rangeVar)!.split(",")[1])??1); i++) {
+                  if (rangeVar is String) {
+                    for (int i =
+                            int.tryParse(exchgValue(rangeVar)!.split(",")[0]) ??
+                                1;
+                        i <
+                            (int.tryParse(
+                                    exchgValue(rangeVar)!.split(",")[1]) ??
+                                1);
+                        i++) {
                       setValue(ac["valueName"], i.toString());
-                      retList.add(await singleProcess(value, loopCfg)??"");
+                      retList.add(await singleProcess(value, loopCfg) ?? "");
                     }
                   }
                 }
                 break;
             }
           }
-          ret=retList.toString();
+          ret = retList.toString();
           break;
 
         ///条件分支执行
