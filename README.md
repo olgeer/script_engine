@@ -45,7 +45,7 @@ globalValue 为全局变量定义，全局生效。
 字符型参数部分支持嵌套变量，则表示在字符串内可使用"{xxx}"的形式将变量名为xxx的值嵌入字符串中，一个参数可嵌套多个变量，如："{url}/page{ipage}.html"
 
 ## 单线命令列表：
-
+---------------------
 ### 字符串操作  
 
 **print**   日志打印，默认打印value的值到日志；
@@ -117,6 +117,13 @@ index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为
 ```
 {
     "action": "trim"
+}
+```
+
+**htmlDecode**   对当前value做html标识转换，把&lt;形式转化为"<"
+```
+{
+    "action": "htmlDecode"
 }
 ```
 
@@ -262,13 +269,6 @@ queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
     },
     "body": "searchtype=all&searchkey={searchkey}",
 
-}
-```
-
-**htmlDecode**   对当前value做html标识转换，把&lt;形式转化为"<"
-```
-{
-    "action": "htmlDecode"
 }
 ```
 
