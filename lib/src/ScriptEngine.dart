@@ -648,7 +648,7 @@ class ScriptEngine {
           //   "action": "for",
           //   "valueName": "ipage",
           //   "type": "list",
-          //   "range": [1,10],     // as String "1,10"
+          //   "range": [1,10],     // as String "1-10"
           //   "list": [1,2,4,5,7], // as String "1,2,3,4"
           //   "loopProcess": []
           // }
@@ -684,11 +684,11 @@ class ScriptEngine {
                   }
                   if (rangeVar is String) {
                     for (int i =
-                            int.tryParse(exchgValue(rangeVar)!.split(",")[0]) ??
+                            int.tryParse(exchgValue(rangeVar)!.split("-")[0]) ??
                                 1;
                         i <
                             (int.tryParse(
-                                    exchgValue(rangeVar)!.split(",")[1]) ??
+                                    exchgValue(rangeVar)!.split("-")[1]) ??
                                 1);
                         i++) {
                       setValue(ac["valueName"], i.toString());
@@ -728,13 +728,29 @@ class ScriptEngine {
         case "callMultiProcess":
           //    {
           //       "action": "callMultiProcess",
+          //       "valueBuilder":[
+          //        {
+          //          "action": "fill",
+          //          "valueName": "ipage",
+          //          "type": "list",
+          //          "range": [1,10],     // as String "1-10"
+          //          "list": [1,2,4,5,7], // as String "1,2,3,4"
+          //          "exp": "{url}_{ipage}"
+          //        }
+          //       ],
+          //       "values": [],
           //       "multiProcess": []
           //    }
+          var buildValues;
+          if(ac["valueBuilder"]!=null){
+            buildValues=await multiProcess([], ac["valueBuilder"]);
+          }
           var multiResult =
-              (await multiProcess([value ?? ""], ac["multiProcess"]));
+              (await multiProcess(buildValues??(ac["values"]??[value ?? ""]), ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
+
         case "callFunction":
           if (functions[ac["functionName"]] != null) {
             if (ac["parameters"] != null && ac["parameters"] is Map) {
@@ -807,6 +823,67 @@ class ScriptEngine {
     switch (ac["action"]) {
       case "multiSelector":
         switch (ac["type"]) {
+          case "fill":
+          // {
+          //   "action": "fill",
+          //   "valueName": "ipage",
+          //   "type": "list",
+          //   "range": [1,10],     // as String "1-10"
+          //   "list": [1,2,4,5,7], // as String "1,2,3,4"
+          //   "exp": "{url}_{ipage}"
+          // }
+            List<String> retList = [];
+            if (ac["type"] != null) {
+              switch (ac["type"]) {
+                case "list":
+                  if (ac["list"] != null) {
+                    var listVar = ac["list"];
+                    if (listVar is String) {
+                      for (String i in exchgValue(listVar)!.split(",")) {
+                        setValue(ac["valueName"], i);
+                        if (exchgValue(ac["exp"]) != null) retList.add(
+                            exchgValue(ac["exp"])!);
+                      }
+                    }
+                    if (listVar is List) {
+                      for (int i in listVar) {
+                        setValue(ac["valueName"], i.toString());
+                        if (exchgValue(ac["exp"]) != null) retList.add(
+                            exchgValue(ac["exp"])!);
+                      }
+                    }
+                  }
+                  break;
+                case "range":
+                  if (ac["range"] != null) {
+                    var rangeVar = ac["range"];
+                    if (rangeVar is List) {
+                      for (int i = rangeVar[0]; i < rangeVar[1]; i++) {
+                        setValue(ac["valueName"], i.toString());
+                        if (exchgValue(ac["exp"]) != null) retList.add(
+                            exchgValue(ac["exp"])!);
+                      }
+                    }
+                    if (rangeVar is String) {
+                      for (int i =
+                          int.tryParse(exchgValue(rangeVar)!.split("-")[0]) ??
+                              1;
+                      i <
+                          (int.tryParse(
+                              exchgValue(rangeVar)!.split("-")[1]) ??
+                              1);
+                      i++) {
+                        setValue(ac["valueName"], i.toString());
+                        if (exchgValue(ac["exp"]) != null) retList.add(
+                            exchgValue(ac["exp"])!);
+                      }
+                    }
+                  }
+                  break;
+                }
+              }
+            ret = retList;
+            break;
           case "dom":
             //            {
             //               "action": "multiSelector",
