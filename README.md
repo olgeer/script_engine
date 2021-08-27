@@ -383,6 +383,9 @@ falseProcess | 假单线命令序列 | 命令序列 | 可 | 否 | 无
 }
 ```
 
+
+### 调用方法  
+
 **callFunction**    调用子函数
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
@@ -423,6 +426,29 @@ multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
     "multiProcess": []
 }
 ```
+
+### 结束命令
+
+**break**    终止当前命令序列  
+范例：
+```
+{
+    "action": "break"
+}
+```
+
+**exit**    退出程序，当前进程关闭  
+范例：
+```
+{
+    "action": "exit"
+}
+```
+
+### 扩展命令  
+引擎支持命令拓展，可在初始化引擎时，设置extendSingleAction方法即可实现。
+extendSingleAction方法的定义为`Future<String?> Function(String? value, dynamic ac,{String? debugId, bool? debugMode})`
+
 
 ## 多线命令列表  
 
