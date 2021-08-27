@@ -715,20 +715,16 @@ class ScriptEngine {
           //       "falseProcess": []
           //     }
           if (conditionPatch(value, ac["condExps"], debugId: debugId)) {
-            ret = await singleProcess(value, ac["trueProcess"]);
+            ret = await singleProcess(value, ac["trueProcess"]??[]);
           } else {
-            ret = await singleProcess(value, ac["falseProcess"]);
+            ret = await singleProcess(value, ac["falseProcess"]??[]);
           }
-          break;
-        case "break":
-          setValue(RETURNCODE, 0);
-          ret = null;
           break;
 
         case "callMultiProcess":
           //    {
           //       "action": "callMultiProcess",
-          //       "valueBuilder":[
+          //       "multiBuilder":[
           //        {
           //          "action": "fill",
           //          "valueName": "ipage",
@@ -742,16 +738,23 @@ class ScriptEngine {
           //       "multiProcess": []
           //    }
           var buildValues;
-          if(ac["valueBuilder"]!=null){
-            buildValues=await multiProcess([], ac["valueBuilder"]);
+          if(ac["multiBuilder"]!=null){
+            buildValues=await multiProcess([], ac["multiBuilder"]);
           }
           var multiResult =
-              (await multiProcess(buildValues??(ac["values"]??[value ?? ""]), ac["multiProcess"]));
+              (await multiProcess(buildValues??(exchgValue(ac["values"])??[value ?? ""]), ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
 
         case "callFunction":
+          // {
+          //   "action": "callFunction",
+          //   "functionName": "getPage",
+          //   "parameters": {
+          //     "page": "{ipage}"
+          //   }
+          // }
           if (functions[ac["functionName"]] != null) {
             if (ac["parameters"] != null && ac["parameters"] is Map) {
               Map<String, dynamic> params = Map.castFrom(ac["parameters"]);
@@ -765,8 +768,16 @@ class ScriptEngine {
             logger.warning("Function ${ac["functionName"]} is not found"); //
           }
           break;
+
         case "exit":
           exit(ac["code"] ?? 0);
+          break;
+
+        case "break":
+          setValue(RETURNCODE, 0);
+          ret = null;
+          break;
+
         default:
           if (extendSingleAction != null) {
             ret = await extendSingleAction!(value, ac,
@@ -1091,7 +1102,7 @@ class ScriptEngine {
         //       "not": true
         // }
         patchResult = relationAction(
-            patchResult, exp.split(",").contains(condValue), ce["relation"]);
+            patchResult, (exp as String).split(",").contains(condValue), ce["relation"]);
         break;
       case "compare":
         // {

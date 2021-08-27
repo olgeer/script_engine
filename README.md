@@ -347,7 +347,7 @@ valueName | 临时变量名 | 字符 | 否 | 否 | 通过循环将值放置到�
 type | 范围类型 | 字符 | 否 | 否 | 暂时支持"list"、"range"这两种
 range | 取值范围 | 整形数组/字符串 | 可 | 否 | 为字符串类型时，格式为"2-10"这样，用"-"分割开，代表2、3、4...10，共9个数
 list | 取值列表 | 整形数组/字符串 | 可 | 否 | 为字符串类型时，格式为"2,10"这样，用","分割开，代表2和10
-loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName变量中后，执行loopProess单行命令队列
+loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName变量中后，执行loopProess单线命令队列
 返回结果数组转换为以","分割的字符串后返回。
 
 范例：
@@ -362,5 +362,98 @@ loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName
 }
 ```
 
+**condition**    通过循环将值放置到临时变量中
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+exps | 条件表达式集 | 表达式数组 | 否 | 否 | 表达式结构见后文
+trueProcess | 真单线命令序列 | 命令序列 | 可 | 否 | 无
+falseProcess | 假单线命令序列 | 命令序列 | 可 | 否 | 无
 
-## 多线命令列表：
+范例：
+```
+{
+    "action": "condition",
+    "exps": [{
+        "expType": "contain",
+        "exp": "搜索结果",
+        "source":"{title}"
+    }],
+    "trueProcess": [],
+    "falseProcess": []
+}
+```
+
+**callFunction**    调用子函数
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+functionName | 函数名 | 字符 | 否 | 否 | 函数名无效时报错
+parameters | 输入参数 | 键值对 | 可 | 可 | 无
+范例：
+```
+{
+    "action": "callFunction",
+    "functionName": "getPage",
+    "parameters": {
+        "page": "{ipage}"
+    }
+}
+```
+
+**callMultiProcess**    调用多线命令序列
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+multiBuilder | 参数组构建 | 多线命令序列 | 可 | | 为空时，用values作为参数
+values | 输入参数组 | 字符串数组 | 可 | 可 | 当multiBuilder及values皆为空时，用[value]作为参数
+multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
+返回结果数组的toString形式，如"abc,ssd,03"
+范例：
+```
+{
+    "action": "callMultiProcess",
+    "multiBuilder":[
+        {
+            "action": "fill",
+            "valueName": "ipage",
+            "type": "list",
+            "list": [1,2,4,5,7],
+            "exp": "{url}_{ipage}"
+        }
+    ],
+    "values": [],
+    "multiProcess": []
+}
+```
+
+## 多线命令列表  
+
+
+
+## 条件表达式  
+
+
+条件表达式为在需要判断条件时使用，表达式的常见格式如下：
+属性 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+expType | 表单式类型 | 字符 | 否 | 否 | 现在支持的表单式类型有"isNull"、"isEmpty"、"in"、"compare"、"contain"、"not"
+exp | 表单式 | 字符/字符串数组 | | 可 | 除"isNull"、"isEmpty"、"not"外，此字段不可空
+source | 源内容 | 字符 | 可 | 可 | 与条件表达式运算的源内容，如为空则当前value为源内容
+not | 非操作 | 布尔 | 可 | 否 | 此条件表达式最终结果是否取非操作
+relation | 条件关系 | 字符 | 可 | 否 | 与上一条件的逻辑关系，支持"and"和"or"
+```
+{
+    "expType": "in",
+    "exp": "jpg,png,jpeg,gif,bmp",
+    "not": true
+}
+{
+    "expType": "compare",
+    "exp": "成功删除"
+}
+{
+    "expType": "contain",
+    "exp": "viewthread.php",
+    "source": "{url}", //* 存在则优先处理
+    "not": true,
+    "relation": "and"
+}
+```
