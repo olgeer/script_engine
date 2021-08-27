@@ -11,31 +11,50 @@
     "globalValue": {
         "url": "https://www.boy5.com",
         "encoding": "utf8",
-        "searchkey": "围城"
+        "ipage": "1"
     },
     "beginSegment": [
         {
-            "action": "getValue",
-            "exp": "{android.applicationDir} - hello world"
-        },
-        {
-            "action": "print"
-        },
-        {
-            "action": "getHtml",
-            "url": "{url}/modules/article/search.php?searchkey={searchkey}",
-            "method": "get",
-            "charset": "utf8"
-        },
-        {
-            "action": "print"
+            "action": "callFunction",
+            "functionName": "searchNovel",
+            "parameters": {
+                "page": "{ipage}"
+            }
         }
-    ]
+    ],
+    "functionDefine": {
+        "searchNovel": {
+            "parameters": [
+                "page"
+            ],
+            "process": [
+                {
+                    "action": "getHtml",
+                    "url": "{url}/forumdisplay.php",
+                    "queryParameters": {
+                        "fid": 59,
+                        "page": "{page}"
+                    },
+                    "method": "get",
+                    "charset": "gbk"
+                },
+                {
+                    "action": "selector",
+                    "type": "dom",
+                    "script": "[name=\"moderate\"]"
+                }
+            ]
+        }
+    }
 }
 ```
+其中 **globalValue** 为全局变量定义，全局生效；  
+**beginSegment** 为此脚本的执行入口，引擎将顺序执行脚本直至结束;  
+**functionDefine** 为方法定义，允许定义参数，使用**callFunction**命令调用；  
+方法定义仍为键值对的方式，键名为方法名，值是方法体，包含两个部分，**parameters** 以及 **process**；  
+**parameters** 为参数名数组，可以为空；  
+**process** 则为命令队列，按顺序执行；  
 
-其中 beginSegment 为此脚本的执行入口，引擎将顺序执行脚本直至结束。
-globalValue 为全局变量定义，全局生效。
 
 脚本分为两类，一类是单线任务，一般只有一个字符型的入口参数，以及脚本项，返回结果也是字符型的；
 另一类则为多线任务，入口参数为字符串数组，及对应的脚本项；
