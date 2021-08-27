@@ -631,6 +631,16 @@ class ScriptEngine {
               else
                 ret = "";
               break;
+            case "regexp":
+              RegExpMatch? rem = RegExp(exchgValue(ac["script"]) ?? "")
+                  .firstMatch(value ?? "");
+              if (rem != null) {
+                if (rem.groupCount > 0)
+                  ret = rem.group(ac["index"] ?? 0);
+                else
+                  ret = rem.group(0);
+              }
+              break;
           }
           break;
         case "for":

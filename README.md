@@ -56,7 +56,7 @@
 **process** 则为命令队列，按顺序执行；  
 
 
-脚本分为两类，一类是单线任务，一般只有一个字符型的入口参数，以及脚本项，返回结果也是字符型的；
+命令分为两类，一类是单线任务，一般只有一个字符型的入口参数，以及脚本项，返回结果也是字符型的；
 另一类则为多线任务，入口参数为字符串数组，及对应的脚本项；
 
 部分单线命令会内嵌多线命令，也有多线命令内嵌单线命令的情况，后续会进行说明。
@@ -290,5 +290,54 @@ queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
 
 }
 ```
+
+### 内容选择器
+
+**selector**    取表达式中的值到value
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+type | 选择器类型 | 字符 | 否 | 否 | 暂时支持"dom"、"xpath"、"regexp"这三种选择器
+script | 选择表达式 | 字符 | 否 | 否 | 根据type参数，存放相应选择器的选择表达式
+property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它值，其代码逻辑为`tmp.attributes[ac["property"]]`
+
+范例：  
+```
+{
+    "action": "selector",
+    "type": "dom",
+    "script": "[property=\"og:novel:book_name\"]",
+    "property": "content"
+}
+{
+    "action": "selector",
+    "type": "xpath",
+    "script": "//p[3]/span[1]/text()"
+}
+{
+    "action": "selector",
+    "type": "regexp",
+    "script": "<[^>]*>"
+}
+```
+
+**selectorAt**    取表达式中的值到value，符合表达式的结果有多条时使用
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+type | 选择器类型 | 字符 | 否 | 否 | 暂时支持"dom"、"xpath"、"regexp"这三种选择器
+script | 选择表达式 | 字符 | 否 | 否 | 根据type参数，存放相应选择器的选择表达式
+property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它值，其代码逻辑为`tmp.attributes[ac["property"]]`
+index | 取值位置 | 整形 | 否 | 否 | 多个结果中的第几个，位置从0开始算
+
+范例：
+```
+{
+    "action": "selectorAt",
+    "type": "dom",
+    "script": "div.book_list",
+    "index": 1
+}
+```
+
+
 
 ## 多线命令列表：
