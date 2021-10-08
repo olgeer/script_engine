@@ -281,9 +281,9 @@ class ScriptEngine {
           //               "length": 4  // 当end为null时，解释此参数，如亦为null则忽略此逻辑
           //             },
           if (value != null) {
-            int start = int.tryParse(ac["start"] ?? "0") ?? 0;
-            int? end = int.tryParse(ac["end"]);
-            int? length = int.tryParse(ac["length"]);
+            int start = ac["start"] ?? 0;
+            int? end = ac["end"];
+            int? length = ac["length"];
             if (end == null && length == null) {
               ret = value.substring(start);
             } else {
