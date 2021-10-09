@@ -836,16 +836,16 @@ class ScriptEngine {
         switch (ac["type"]) {
           case "fill":
           // {
-          //   "action": "fill",
-          //   "valueName": "ipage",
-          //   "type": "list",
-          //   "range": [1,10],     // as String "1-10"
-          //   "list": [1,2,4,5,7], // as String "1,2,3,4"
-          //   "exp": "{url}_{ipage}"
+            // "action": "multiSelector",
+            // "type": "fill",
+            // "valueName": "ipage",
+            // "fillType": "range",
+            // "range": "{pageRange}",
+            // "exp": "{muluPageUrl}_{ipage}/"
           // }
             List<String> retList = [];
-            if (ac["type"] != null) {
-              switch (ac["type"]) {
+            if (ac["fillType"] != null) {
+              switch (ac["fillType"]) {
                 case "list":
                   if (ac["list"] != null) {
                     var listVar = ac["list"];
@@ -869,7 +869,7 @@ class ScriptEngine {
                   if (ac["range"] != null) {
                     var rangeVar = ac["range"];
                     if (rangeVar is List) {
-                      for (int i = rangeVar[0]; i < rangeVar[1]; i++) {
+                      for (int i = rangeVar[0]; i <= rangeVar[1]; i++) {
                         setValue(ac["valueName"], i.toString());
                         if (exchgValue(ac["exp"]) != null) retList.add(
                             exchgValue(ac["exp"])!);
