@@ -11,7 +11,7 @@
       "exp": "{android.applicationDir} - hello world"
     },
     {
-      "action": "print"
+      "action": "pause"
     },
     {
       "action": "getHtml",
@@ -20,7 +20,7 @@
       "charset": "utf8"
     },
     {
-      "action": "print"
+      "action": "pause"
     }
   ]
 }

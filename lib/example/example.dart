@@ -14,7 +14,10 @@ void main(List<String> args) async{
     Uri script = Uri.file(scriptPath);
     // String script = readFile(scriptPath);
     if(script!=null) {
-      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: false);
+      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: false,onPause: (v,a,r,i,se)async{
+        logger.info("\nvalue:$v\naction:$a\nret:$r\ndebugid:$i");
+        se.state=ScriptEngineState.Running;
+      });
       // Future.delayed(Duration(milliseconds: 500),()=>se.run());
       String? result;
       await se.init().then((value)async =>result=await se.run());

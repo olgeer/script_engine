@@ -3,7 +3,8 @@
   "globalValue": {
     "baseUrl": "https://www.yqzww.cc/",
     "urlList": "xuanhuan,dushi,wuxia,lishi,kehuan,kongbu",
-    "encoding": "gbk"
+    "encoding": "gbk",
+    "savePath": "{system.currentdir}/assets/"
   },
   "beginSegment": [
     {
@@ -152,12 +153,12 @@
         },
         {
           "action": "saveFile",
-          "fileName": "{system.currentdir}/assets/{url}list.json",
+          "fileName": "{savePath}{url}list.json",
           "mode": "overwrite"
         },
         {
           "action": "print",
-          "value": "{system.currentdir}/assets/{url}list.json is saved !"
+          "value": "{savePath}{url}list.json is saved !"
         }
       ]
     }

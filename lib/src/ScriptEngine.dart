@@ -14,8 +14,8 @@ typedef multiAction = Future<List<String?>> Function(
     {String? debugId, bool? debugMode});
 typedef valueProvider = String Function(String exp);
 typedef actionEvent = Future<void> Function(
-    dynamic value, dynamic ac, dynamic ret, String debugId);
-enum ScriptEngineState { Initing, Ready, Running, Done }
+    dynamic value, dynamic ac, dynamic ret, String debugId,ScriptEngine se);
+enum ScriptEngineState { Initing, Ready, Running, Done, Pause }
 
 class ScriptEngine {
   Map<String, dynamic> tValue = {}; //配置运行时临时变量表
@@ -34,6 +34,7 @@ class ScriptEngine {
   valueProvider? extendValueProvide;
 
   actionEvent? onAction;
+  actionEvent? onPause;
   void Function(ScriptEngineState s)? onScriptEngineStateChange;
 
   final Logger logger = Logger("ScriptEngine");
@@ -51,6 +52,7 @@ class ScriptEngine {
       this.extendMultiAction,
       this.extendValueProvide,
       this.onAction,
+        this.onPause,
       this.onScriptEngineStateChange,
       this.debugMode = false})
       : assert(scriptSource != null);
@@ -116,7 +118,7 @@ class ScriptEngine {
   }
 
   ///直接执行脚本，所有处理均包含在脚本内，对最终结果不太关注
-  Future<String?> run() async {
+  Future<String?> run({bool stepByStep = false}) async {
     if (state == null) await init();
     // while (state == ScriptEngineState.Initing) {
     //   Future.delayed(Duration(milliseconds: 500));
@@ -256,6 +258,17 @@ class ScriptEngine {
 
     try {
       switch (ac["action"]) {
+        case "pause":
+          if(onPause!=null) {
+            state = ScriptEngineState.Pause;
+            onPause!(value, ac, ret, debugId,this);
+            while(state==ScriptEngineState.Pause){
+              sleep(Duration(seconds: 1));
+            }
+          }
+
+          refreshValue = false;
+          break;
         case "print":
           //           {
           //             "action": "print",
@@ -792,7 +805,7 @@ class ScriptEngine {
       // throw e;
     }
 
-    if (onAction != null) onAction!(value, ac, ret, debugId);
+    if (onAction != null) onAction!(value, ac, ret, debugId,this);
 
     if (debugMode && ret != null)
       logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
@@ -832,6 +845,17 @@ class ScriptEngine {
     if (debugMode) logger.finest("--$debugId--value : $value)");
 
     switch (ac["action"]) {
+      case "pause":
+        if(onPause!=null) {
+          state = ScriptEngineState.Pause;
+          onPause!(value, ac, ret, debugId,this);
+          while(state==ScriptEngineState.Pause){
+            sleep(Duration(seconds: 1));
+          }
+        }
+
+        ret = value;
+        break;
       case "multiSelector":
         switch (ac["type"]) {
           case "fill":
@@ -879,7 +903,7 @@ class ScriptEngine {
                       for (int i =
                           int.tryParse(exchgValue(rangeVar)!.split("-")[0]) ??
                               1;
-                      i <
+                      i <=
                           (int.tryParse(
                               exchgValue(rangeVar)!.split("-")[1]) ??
                               1);
@@ -1056,7 +1080,7 @@ class ScriptEngine {
         break;
     }
 
-    if (onAction != null) onAction!(value, ac, ret, debugId);
+    if (onAction != null) onAction!(value, ac, ret, debugId,this);
 
     if (debugMode)
       logger.fine("--$debugId--🧩result[${shortString(ret.toString())}]");
