@@ -756,7 +756,7 @@ class ScriptEngine {
             buildValues=await multiProcess([], ac["multiBuilder"]);
           }
           var multiResult =
-              (await multiProcess(buildValues??(exchgValue(ac["values"])??[value ?? ""]), ac["multiProcess"]));
+              (await multiProcess(buildValues??[exchgValue(ac["values"])??value ?? ""], ac["multiProcess"]));
           setValue(MULTIRESULT, multiResult);
           ret = multiResult.toString();
           break;
@@ -858,13 +858,13 @@ class ScriptEngine {
         ret = value;
         break;
       case "fill":
-      // {
-      // "action": "fill",
-      // "type": "range",
-      // "valueName": "ipage",
-      // "range": "{pageRange}",
-      // "exp": "{muluPageUrl}_{ipage}/"
-      // }
+        // {
+        // "action": "fill",
+        // "type": "range",
+        // "valueName": "ipage",
+        // "range": "{pageRange}",
+        // "exp": "{muluPageUrl}_{ipage}/"
+        // }
         List<String> retList = [];
         if (ac["type"] != null) {
           switch (ac["type"]) {
@@ -919,67 +919,6 @@ class ScriptEngine {
         break;
       case "multiSelector":
         switch (ac["type"]) {
-          case "fill":
-          // {
-            // "action": "multiSelector",
-            // "type": "fill",
-            // "valueName": "ipage",
-            // "fillType": "range",
-            // "range": "{pageRange}",
-            // "exp": "{muluPageUrl}_{ipage}/"
-          // }
-            List<String> retList = [];
-            if (ac["fillType"] != null) {
-              switch (ac["fillType"]) {
-                case "list":
-                  if (ac["list"] != null) {
-                    var listVar = ac["list"];
-                    if (listVar is String) {
-                      for (String i in exchgValue(listVar)!.split(",")) {
-                        setValue(ac["valueName"], i);
-                        if (exchgValue(ac["exp"]) != null) retList.add(
-                            exchgValue(ac["exp"])!);
-                      }
-                    }
-                    if (listVar is List) {
-                      for (int i in listVar) {
-                        setValue(ac["valueName"], i.toString());
-                        if (exchgValue(ac["exp"]) != null) retList.add(
-                            exchgValue(ac["exp"])!);
-                      }
-                    }
-                  }
-                  break;
-                case "range":
-                  if (ac["range"] != null) {
-                    var rangeVar = ac["range"];
-                    if (rangeVar is List) {
-                      for (int i = rangeVar[0]; i <= rangeVar[1]; i++) {
-                        setValue(ac["valueName"], i.toString());
-                        if (exchgValue(ac["exp"]) != null) retList.add(
-                            exchgValue(ac["exp"])!);
-                      }
-                    }
-                    if (rangeVar is String) {
-                      for (int i =
-                          int.tryParse(exchgValue(rangeVar)!.split("-")[0]) ??
-                              1;
-                      i <=
-                          (int.tryParse(
-                              exchgValue(rangeVar)!.split("-")[1]) ??
-                              1);
-                      i++) {
-                        setValue(ac["valueName"], i.toString());
-                        if (exchgValue(ac["exp"]) != null) retList.add(
-                            exchgValue(ac["exp"])!);
-                      }
-                    }
-                  }
-                  break;
-                }
-              }
-            ret = retList;
-            break;
           case "dom":
             //            {
             //               "action": "multiSelector",

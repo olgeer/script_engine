@@ -20,7 +20,35 @@
       "charset": "utf8"
     },
     {
+      "action": "callMultiProcess",
+      "values": "{this}",
+      "multiProcess": [
+        {
+          "action": "multiSelector",
+          "type": "regexp",
+          "script": "src=(\"[^\"]*\")"
+        }
+      ]
+    },
+    {
       "action": "pause"
+    },
+    {
+      "action": "callMultiProcess",
+      "multiBuilder":[
+        {
+          "action": "fill",
+          "valueName": "ipage",
+          "type": "list",
+          "list": [1,2,4,5,7],
+          "exp": "{url}_{ipage}"
+        }
+       ],
+       "values": [],
+       "multiProcess": [
+
+       ]
     }
+
   ]
 }
