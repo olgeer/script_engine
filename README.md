@@ -451,8 +451,37 @@ extendSingleAction方法的定义为`Future<String?> Function(String? value, dyn
 
 
 ## 多线命令列表  
+多线命令的入口参数为字符串数组，输出参数也是字符串数组
+**pause**    暂停命令队列处理并进入循环等待状态，直至引擎状态state不等于ScriptEngineState.Pause为止，并触发onPause方法。
+如onPause方法未设置则本命令无效，继续执行命令队列。
+此命令不影响value值，并使ret等于value。
 
+**multiSelector**    取表达式中的值到value数组
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+type | 选择器类型 | 字符 | 否 | 否 | 暂时支持"dom"、"xpath"、"regexp"这几种选择器
+script | 选择表达式 | 字符 | 可 | 否 | 根据type参数，存放相应选择器的选择表达式
+property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它属性值，如"class"，其代码逻辑为`tmp.attributes[ac["property"]]`
 
+范例：
+```
+{
+    "action": "multiSelector",
+    "type": "dom",
+    "script": ".sbintro",
+    "property": "content"
+}
+{
+    "action": "multiSelector",
+    "type": "xpath",
+    "script": "//a/@href"
+}
+{
+    "action": "multiSelector",
+    "type": "regexp",
+    "script": "<[^>]*>"
+}
+```
 
 ## 条件表达式  
 

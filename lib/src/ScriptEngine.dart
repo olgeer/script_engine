@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:html/parser.dart';
+import 'package:html/dom.dart';
 import 'package:logging/logging.dart';
 import 'package:xpath_parse/xpath_selector.dart';
 import 'package:fast_gbk/fast_gbk.dart';
@@ -856,6 +857,66 @@ class ScriptEngine {
 
         ret = value;
         break;
+      case "fill":
+      // {
+      // "action": "fill",
+      // "type": "range",
+      // "valueName": "ipage",
+      // "range": "{pageRange}",
+      // "exp": "{muluPageUrl}_{ipage}/"
+      // }
+        List<String> retList = [];
+        if (ac["type"] != null) {
+          switch (ac["type"]) {
+            case "list":
+              if (ac["list"] != null) {
+                var listVar = ac["list"];
+                if (listVar is String) {
+                  for (String i in exchgValue(listVar)!.split(",")) {
+                    setValue(ac["valueName"], i);
+                    if (exchgValue(ac["exp"]) != null) retList.add(
+                        exchgValue(ac["exp"])!);
+                  }
+                }
+                if (listVar is List) {
+                  for (int i in listVar) {
+                    setValue(ac["valueName"], i.toString());
+                    if (exchgValue(ac["exp"]) != null) retList.add(
+                        exchgValue(ac["exp"])!);
+                  }
+                }
+              }
+              break;
+            case "range":
+              if (ac["range"] != null) {
+                var rangeVar = ac["range"];
+                if (rangeVar is List) {
+                  for (int i = rangeVar[0]; i <= rangeVar[1]; i++) {
+                    setValue(ac["valueName"], i.toString());
+                    if (exchgValue(ac["exp"]) != null) retList.add(
+                        exchgValue(ac["exp"])!);
+                  }
+                }
+                if (rangeVar is String) {
+                  for (int i =
+                      int.tryParse(exchgValue(rangeVar)!.split("-")[0]) ??
+                          1;
+                  i <=
+                      (int.tryParse(
+                          exchgValue(rangeVar)!.split("-")[1]) ??
+                          1);
+                  i++) {
+                    setValue(ac["valueName"], i.toString());
+                    if (exchgValue(ac["exp"]) != null) retList.add(
+                        exchgValue(ac["exp"])!);
+                  }
+                }
+              }
+              break;
+          }
+        }
+        ret = retList;
+        break;
       case "multiSelector":
         switch (ac["type"]) {
           case "fill":
@@ -923,11 +984,29 @@ class ScriptEngine {
             //            {
             //               "action": "multiSelector",
             //               "type": "dom",
-            //               "script": ".sbintro"
+            //               "script": ".sbintro",
+            //               "property": "innerHtml"
             //             }
-            ret = domList2StrList(HtmlParser(value[0] ?? "")
+            var tmp=HtmlParser(value[0] ?? "")
                 .parse()
-                .querySelectorAll(ac["script"]));
+                .querySelectorAll(ac["script"]);
+
+            ret = [];
+            for (Element e in tmp) {
+              switch (ac["property"] ?? "innerHtml") {
+                case "innerHtml":
+                  ret.add(e.innerHtml);
+                  break;
+                case "outerHtml":
+                  ret.add(e.outerHtml);
+                  break;
+                case "content":
+                  ret.add(e.attributes["content"]);
+                  break;
+                default:
+                  ret.add(e.attributes[ac["property"]] ?? "");
+              }
+            }
             break;
           case "xpath":
             //          {
@@ -936,6 +1015,22 @@ class ScriptEngine {
             //             "script": "//a/@href"
             //           }
             ret = XPath.source(value[0] ?? "").query(ac["script"]).list();
+            break;
+            //            {
+            //               "action": "multiSelector",
+            //               "type": "regexp",
+            //               "script": "<[^>]*>"
+            //             }, //匹配所有发现的
+          case "regexp":
+            Iterable<RegExpMatch> rem = RegExp(exchgValue(ac["script"]) ?? "")
+                .allMatches(value[0] ?? "");
+            ret = [];
+            for (RegExpMatch m in rem) {
+              if (m.groupCount > 0)
+                ret.add(m.group(1));
+              else
+                ret.add(m.group(0));
+            }
             break;
         }
         break;
