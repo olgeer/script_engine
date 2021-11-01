@@ -932,7 +932,7 @@ class ScriptEngine {
 
             ret = [];
             for (Element e in tmp) {
-              switch (ac["property"] ?? "innerHtml") {
+              switch (ac["property"] ?? "outerHtml") {
                 case "innerHtml":
                   ret.add(e.innerHtml);
                   break;
