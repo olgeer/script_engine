@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:html/parser.dart';
 import 'package:html/dom.dart';
 import 'package:logging/logging.dart';
+import 'package:script_engine/src/logger.dart';
 import 'package:xpath_parse/xpath_selector.dart';
 import 'package:fast_gbk/fast_gbk.dart';
 import 'actionCollect.dart';
@@ -113,6 +114,7 @@ class ScriptEngine {
 
       state = ScriptEngineState.Ready;
       if (onScriptEngineStateChange != null) onScriptEngineStateChange!(state!);
+      logger.fine("Script Engine init success !");
     } else {
       logger.fine("Script Engine had inited !");
     }
@@ -275,7 +277,9 @@ class ScriptEngine {
           //             "action": "print",
           //             "value": "url"   //*
           //           }
-          logger.info(exchgValue(ac["value"]) ?? value);
+          // logger.info(exchgValue(ac["value"]) ?? value);
+          largeLog(exchgValue(ac["value"]) ?? value,logHandle: logger,level: Level.INFO);
+
           refreshValue = false;
           break;
         case "replace":
@@ -284,8 +288,13 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          ret =
-              value?.replaceAll(RegExp(ac["from"]), exchgValue(ac["to"]) ?? "");
+          if(ac["from"]!=null) {
+            ret =
+                value?.replaceAll(
+                    RegExp(exchgValue(ac["from"])!), exchgValue(ac["to"]) ?? "");
+          }else{
+            ret = value;
+          }
           break;
         case "substring":
           //             {
@@ -333,10 +342,12 @@ class ScriptEngine {
         case "split":
           //             {
           //               "action": "split",
+          //               "value": "cid=43",
           //               "pattern": "cid=",
-          //               "index": 1
+          //               "index": 1   //从0开始
           //             },
           try {
+            value=exchgValue(ac["value"])??value;
             if (ac["index"] is int) {
               ret = value
                   ?.split(exchgValue(ac["pattern"]) ?? "")
@@ -506,7 +517,7 @@ class ScriptEngine {
             String? body = exchgValue(ac["body"]);
 
             Encoding encoding =
-                "gbk".compareTo(ac["charset"]) == 0 ? gbk : utf8;
+                "gbk".compareTo(exchgValue(ac["charset"])??"") == 0 ? gbk : utf8;
 
             // Map<String, dynamic> queryParameters =
             //     Map.castFrom(ac["queryParameters"] ?? {});
@@ -553,7 +564,7 @@ class ScriptEngine {
           //           }
           ret = HtmlCodec().decode(value);
           break;
-        case "selector":
+        case "selectorOne":
           switch (ac["type"]) {
             //            {
             //               "action": "selector",
@@ -607,7 +618,7 @@ class ScriptEngine {
               break;
           }
           break;
-        case "selectorAt":
+        case "selector":
           //          {
           //             "action": "selectorAt",
           //             "type": "dom",
@@ -617,7 +628,7 @@ class ScriptEngine {
           switch (ac["type"]) {
             case "dom":
               var tmps =
-                  HtmlParser(value).parse().querySelectorAll(ac["script"]);
+                  HtmlParser(value).parse().querySelectorAll(exchgValue(ac["script"])??"");
               var tmp;
               if ((tmps.length) > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
               if (tmp != null) {
@@ -978,7 +989,7 @@ class ScriptEngine {
         //             "action": "remove",
         //             "index": 0,    //*
         //             "except": 2    //*
-        //             "condition": []    //*
+        //             "condExps": []    //*
         //           }
         //          index优先级更高,except次之,condition最低
         var index = ac["index"];

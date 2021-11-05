@@ -46,9 +46,10 @@ void initLogger({Level logLevel = Level.FINE}) {
   });
 }
 
-void largeLog(dynamic msg, {Level level = Level.FINER}) {
+void largeLog(dynamic msg, {Logger? logHandle,Level level = Level.FINER}) {
   String str;
   final int maxPrintLength = 511;
+  if(logHandle==null)logHandle=logger;
 
   if (!(msg is String)) {
     str = msg.toString();
@@ -58,9 +59,9 @@ void largeLog(dynamic msg, {Level level = Level.FINER}) {
 
   for (String oneLine in str.split("\n")) {
     while (oneLine.length > maxPrintLength) {
-      logger.log(level, oneLine.substring(0, maxPrintLength));
+      logHandle.log(level, oneLine.substring(0, maxPrintLength));
       oneLine = oneLine.substring(maxPrintLength);
     }
-    logger.log(level, oneLine);
+    logHandle.log(level, oneLine);
   }
 }

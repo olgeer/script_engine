@@ -2640,5 +2640,347 @@
         }
       }
     }
+  },
+  {
+    "name": "乐文小说网",
+    "descripe": "女频资源丰富",
+    "url": "https://www.lewenlewen.com",
+    "encoding": "gbk",
+    "enable": true,
+    "debugMode": true,
+    "speedLevel": 1,
+    "version": "2.0",
+    "test": {
+      "novelName": "先生们"
+    },
+    "search": {
+      "searchProcess": [
+        {
+          "action": "getHtml",
+          "url": "{url}/s.php?q={searchkey}",
+          "method": "get",
+          "charset": "gbk"
+        }
+      ],
+      "title": {
+        "titleProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "title"
+          }
+        ],
+        "matchExp": {
+          "expType": "contain",
+          "exp": "小说搜索"
+        }
+      },
+      "resultProcess": [
+        {
+          "action": "foreach",
+          "preProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".type_show"
+            }
+          ],
+          "splitProcess": [
+            {
+              "action": "multiSelector",
+              "type": "dom",
+              "script": ".bookbox"
+            }
+          ]
+        }
+      ],
+      "fillinBookInfo": {
+        "preProcess": [],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".bookname"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//a/text()"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".bookname"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//a/@href"
+            },
+            {
+              "action": "split",
+              "pattern": "：",
+              "index": 1
+            },
+            {
+              "action": "concat",
+              "front": "{url}",
+              "back": ""
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".update"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//a/text()"
+            }
+          ],
+          "writer": null,
+          "length": null,
+          "lastUpdate": null,
+          "status": null,
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": ".bookimg"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//img/@src"
+            },
+            {
+              "action": "concat",
+              "front": "{url}",
+              "back": ""
+            }
+          ]
+        }
+      }
+    },
+    "download": {
+      "repairBookInfo": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "title"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "全文阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "novelName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:book_name\"]",
+              "property": "content"
+            }
+          ],
+          "novelHome": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:read_url\"]",
+              "property": "content"
+            }
+          ],
+          "lastChapter": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:latest_chapter_name\"]",
+              "property": "content"
+            }
+          ],
+          "writer": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:author\"]",
+              "property": "content"
+            }
+          ],
+          "length": null,
+          "lastUpdate": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:update_time\"]",
+              "property": "content"
+            }
+          ],
+          "status": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:novel:status\"]",
+              "property": "content"
+            }
+          ],
+          "describe": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:description\"]",
+              "property": "content"
+            }
+          ],
+          "coverUrl": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[property=\"og:image\"]",
+              "property": "content"
+            }
+          ]
+        }
+      },
+      "chapterProcess": {
+        "preProcess": [
+          {
+            "action": "selector",
+            "type": "dom",
+            "script": "ul.dirlist"
+          }
+        ],
+        "splitProcess": [
+          {
+            "action": "multiSelector",
+            "type": "xpath",
+            "script": "//a/@href"
+          }
+        ],
+        "endProcess": [
+          {
+            "action": "concat",
+            "front": "{url}",
+            "back": ""
+          }
+        ]
+      },
+      "writeProcess": {
+        "title": {
+          "titleProcess": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "[name=\"description\"]",
+              "property": "content"
+            }
+          ],
+          "matchExp": {
+            "expType": "contain",
+            "exp": "无弹窗阅读"
+          }
+        },
+        "preProcess": [
+          {
+            "action": "htmlDecode"
+          }
+        ],
+        "fillin": {
+          "chapterName": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.title"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "//h1/a/text()"
+            },
+            {
+              "action": "trim"
+            }
+          ],
+          "text": [
+            {
+              "action": "selector",
+              "type": "dom",
+              "script": "div.frame-btn"
+            },
+            {
+              "action": "selector",
+              "type": "xpath",
+              "script": "/a[4]/@href"
+            },
+            {
+              "action": "push"
+            },
+            {
+              "action": "split",
+              "pattern": "cid=",
+              "index": 1
+            },
+            {
+              "action": "setValue",
+              "valueName": "cid"
+            },
+            {
+              "action": "pop"
+            },
+            {
+              "action": "split",
+              "pattern": "novelid=",
+              "index": 1
+            },
+            {
+              "action": "split",
+              "pattern": "&",
+              "index": 0
+            },
+            {
+              "action": "setValue",
+              "valueName": "bid"
+            },
+            {
+              "action": "setValue",
+              "valueName": "siteid",
+              "value": "0"
+            },
+            {
+              "action": "getHtml",
+              "url": "{url}/novelsearch/chapter/transcode.html",
+              "method": "post",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+              },
+              "body": "siteid=0&bid={bid}&cid={cid}",
+              "charset": "utf8"
+            },
+            {
+              "action": "json",
+              "keyName": "info"
+            },
+            {
+              "action": "replace",
+              "from": "<br[ |/]*>",
+              "to": "\n"
+            }
+          ]
+        }
+      }
+    }
   }
 ]

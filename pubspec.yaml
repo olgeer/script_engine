@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^4.0.0
-#  fast_gbk: ^0.1.2+1
+  fast_gbk: ^1.0.0
 #  xpath_parse: ^1.0.2
   logging: ^1.0.1
   console: ^4.1.0
@@ -20,9 +20,9 @@ dependencies:
     git:
       url: git://github.com/olgeer/xpath.git
       ref: main
-  fast_gbk:
-    git:
-      url: https://github.com/lixiangthinker/fast_gbk.git
+#  fast_gbk:
+#    git:
+#      url: https://github.com/lixiangthinker/fast_gbk.git
 
 dev_dependencies:
   flutter_test:
