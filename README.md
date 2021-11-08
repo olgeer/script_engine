@@ -287,8 +287,7 @@ queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
     "headers": {
         "Content-Type": "application/x-www-form-urlencoded"
     },
-    "body": "searchtype=all&searchkey={searchkey}",
-
+    "body": "searchtype=all&searchkey={searchkey}"
 }
 ```
 
