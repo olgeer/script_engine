@@ -2,9 +2,9 @@
   "processName": "getSuggestList",
   "globalValue": {
     "baseUrl": "https://www.yqzww.cc/",
-    "urlList": "xuanhuan,dushi,wuxia,lishi,kehuan,kongbu",
+    "urlList": "xuanhuan,dushi,wangyou,lishi,kehuan,xiuzhen",
     "encoding": "gbk",
-    "savePath": "{system.currentdir}/assets/"
+    "savePath": "{system.currentdir}/assets/setting/"
   },
   "beginSegment": [
     {
@@ -146,6 +146,9 @@
                   "action": "concat",
                   "front": "{",
                   "back": "}"
+                },
+                {
+                  "action": "print"
                 }
               ]
             }

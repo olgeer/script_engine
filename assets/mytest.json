@@ -8,47 +8,17 @@
   "beginSegment": [
     {
       "action": "getValue",
-      "exp": "{android.applicationDir} - hello world"
+      "Exp": "{android.applicationDir} - hello world"
     },
     {
-      "action": "pause"
+      "action": "print"
     },
     {
-      "action": "getHtml",
-      "url": "{url}/modules/article/search.php?searchkey={searchkey}",
-      "method": "get",
-      "charset": "utf8"
+      "action": "getValue",
+      "Exp": "abc {system.platform} def"
     },
     {
-      "action": "callMultiProcess",
-      "values": "{this}",
-      "multiProcess": [
-        {
-          "action": "multiSelector",
-          "type": "regexp",
-          "script": "src=(\"[^\"]*\")"
-        }
-      ]
-    },
-    {
-      "action": "pause"
-    },
-    {
-      "action": "callMultiProcess",
-      "multiBuilder":[
-        {
-          "action": "fill",
-          "valueName": "ipage",
-          "type": "list",
-          "list": [1,2,4,5,7],
-          "exp": "{url}_{ipage}"
-        }
-       ],
-       "values": [],
-       "multiProcess": [
-
-       ]
+      "action": "print"
     }
-
   ]
 }

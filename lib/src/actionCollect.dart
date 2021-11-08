@@ -10,6 +10,22 @@ import 'package:script_engine/src/logger.dart';
 typedef FutureCall = Future<Response?> Function();
 enum RequestMethod { get, post }
 
+Map<String,dynamic> cmdLowcase(dynamic ac){
+  Map<String,dynamic> newAc=Map.castFrom(ac as Map<String,dynamic>);
+
+  var oldKeys=newAc.keys.toList();
+  for(String oldKey in oldKeys){
+    newAc.putIfAbsent(oldKey.toLowerCase(), () => newAc.remove(oldKey));
+  }
+
+  return newAc;
+}
+
+String strLowcase(dynamic str){
+  String ret=(str as String).toLowerCase();
+  return ret;
+}
+
 List<String> domList2StrList(List<Element> domList) {
   List<String> retList = [];
   for (Element e in domList) {
