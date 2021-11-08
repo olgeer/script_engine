@@ -341,8 +341,8 @@ loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName
     "action": "for",
     "valueName": "ipage",
     "type": "list",
-    "range": [1,10],     // as String "1-10"
-    "list": [1,2,4,5,7], // as String "1,2,3,4"
+    "range": [1,10],
+    "list": [1,2,4,5,7],
     "loopProcess": []
 }
 ```
