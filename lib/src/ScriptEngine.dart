@@ -467,11 +467,11 @@ class ScriptEngine {
           //               "action": "saveFile",
           //               "fileName": "{basePath}/file1.txt",
           //               "saveContent": "{title}\n\r{content}"
-          //               "mode": "append"//默认  可选"overwrite"
+          //               "fileMode": "append"//默认  可选"overwrite"
           //             },
           if (ac["fileName"] != null) {
             FileMode fileMode =
-                ((ac["mode"] ?? "append") as String).compareTo("append") == 0
+                ((ac["fileMode"] ?? "append") as String).compareTo("append") == 0
                     ? FileMode.append
                     : FileMode.write;
             saveFile(exchgValue(ac["fileName"])!,
@@ -485,12 +485,16 @@ class ScriptEngine {
           //               "action": "saveUrlFile",
           //               "fileName": "{basePath}/file1.jpg",
           //               "url": "http://pic.baidu.com/sample.jpg",
-          //               "overwrite": true    //* 默认为false
+          //               "fileMode": "overwrite"
           //             },
           if (ac["url"] != null) {
+            FileMode fileMode =
+            ((ac["fileMode"] ?? "overwrite") as String).compareTo("append") == 0
+                ? FileMode.append
+                : FileMode.write;
             saveUrlFile(exchgValue(ac["url"])!,
                 saveFileWithoutExt: exchgValue(ac["fileName"]),
-                overwrite: ac["overwrite"] ?? false);
+                fileMode: fileMode);
           }
           refreshValue = false;
           break;
@@ -801,7 +805,7 @@ class ScriptEngine {
             ret = await singleProcess(
                 value, functions[ac["functionName"]]["process"]);
           } else {
-            logger.warning("Function ${ac["functionName"]} is not found"); //
+            logger.warning("Function ${ac["functionName"]} is not found");
           }
           break;
 

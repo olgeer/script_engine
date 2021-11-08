@@ -99,7 +99,7 @@ Future<Response?> getUrlFile(String url,
 
 Future<String?> saveUrlFile(String url,
     {String? saveFileWithoutExt,
-    bool overwrite = false,
+    FileMode fileMode=FileMode.write,
     int retry = 3,
     int seconds = 3}) async {
   // if (tmpResp.data > 0) {
@@ -117,7 +117,7 @@ Future<String?> saveUrlFile(String url,
   }
 
   File urlFile = File("$saveFileWithoutExt.${fileExt ?? ""}");
-  if (urlFile.existsSync() && overwrite) {
+  if (urlFile.existsSync() && fileMode==FileMode.write) {
     urlFile.deleteSync();
   }
   if (!urlFile.existsSync()) {
@@ -132,7 +132,7 @@ Future<String?> saveUrlFile(String url,
 
       urlFile.createSync(recursive: true);
       urlFile.writeAsBytesSync(tmpResp.data.toList(),
-          mode: FileMode.write, flush: true);
+          mode: fileMode, flush: true);
 
       logger.fine("Save $url to ${urlFile.path} is OK !");
     } else {

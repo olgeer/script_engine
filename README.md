@@ -5,7 +5,7 @@
 ## 引擎所支持的json脚本说明
 
 脚本结构：
-```
+```json
 {
     "processName": "testProc",
     "globalValue": {
@@ -71,10 +71,10 @@
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|-----|----
 value|指定输出格式|字符型|可空|可|可采用{xxx}形式调用参数
-```
+```json
 {
     "action": "print",
-    "value": "{url} is print"   //*
+    "value": "{url} is print"
 }
 ```
 
@@ -83,9 +83,9 @@ value|指定输出格式|字符型|可空|可|可采用{xxx}形式调用参数
 ----|----|----|----|-----|----
 from | 匹配内容 | 字符型 | 否 | 否 | 可使用正则表单式
 to | 替换内容 | 字符型 | 可空 | 可 | 默认为""
-```
+```json
 {
-    action": "replace",
+    "action": "replace",
     "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
     "to": ""
 }
@@ -94,15 +94,15 @@ to | 替换内容 | 字符型 | 可空 | 可 | 默认为""
 **substring**   取子串命令，对value进行
 参数名 | 描述 | 类型 | 可空 | 说明
 ----|-----|----|----|------
-start | 开始位置 | 整形 | 否 | 如为负数则指倒数的位数
-end | 结束位置 | 整形 | 可空 | 如为负数则指倒数的位数，当为空时会检测length参数
+start | 开始位置 | 整形 | 否 | 如为负数则指倒数的位数,为null 则 从0开始，如果为 负数 则从后面算起，如 "abcde" ,-2则指从'd'起
+end | 结束位置 | 整形 | 可空 | 如为负数则指倒数的位数，当为空时会检测length参数, 为null 则 到结尾，当end值小于begin值时，两值对调，如为负数则从开始算起
 length | 子串长度 | 整形 | 可空 | 只有当end为空时生效，如也为空则相当于end等于字符串末尾位置
-```
+```json
 {
     "action": "substring",
-    "start": 2,  // 为null 则 从0开始，如果为 负数 则从后面算起，如 "abcde" ,-2则指从'd'起
-    "end": 10,   // 为null 则 到结尾，当end值小于begin值时，两值对调，如为负数则从开始算起
-    "length": 4  // 当end为null时，解释此参数，如亦为null则忽略此逻辑
+    "start": 2,
+    "end": 10,
+    "length": 4
 }
 ```
 
@@ -111,7 +111,7 @@ length | 子串长度 | 整形 | 可空 | 只有当end为空时生效，如也�
 ----|----|----|----|----|----
 front | 前字符串 | 字符 | 可空 | 可 | 为空则相对于""
 back | 后字符串 | 字符 | 可空 | 可 | 为空则相对于""
-```
+```json
 {
     "action": "concat",
     "front": "<table>",
@@ -124,7 +124,7 @@ back | 后字符串 | 字符 | 可空 | 可 | 为空则相对于""
 ----|----|----|----|----|----
 pattern | 分割字符串 | 字符 | 否 | 可 | 如查无此分割串则返回""
 index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为字符串时仅接受"first"和"last"值
-```
+```json
 {
     "action": "split",
     "pattern": "cid=",
@@ -133,14 +133,14 @@ index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为
 ```
 
 **trim**   去除前后空格命令，对value进行
-```
+```json
 {
     "action": "trim"
 }
 ```
 
 **htmlDecode**   对当前value做html标识转换，把&lt;形式转化为"<"
-```
+```json
 {
     "action": "htmlDecode"
 }
@@ -154,12 +154,12 @@ index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为
 valueName | 变量名称 | 字符 | 否 | 否 | 如查无此分割串则返回""
 value | 变量值 | 字符 | 可空 | 可 | value为空且则valueProcess为空则保存当前value值
 valueProcess | 命令队列 | 命令队列 | 可空 | 否 | value为空且则valueProcess为空则保存当前value值
-```
+```json
 {
     "action": "setValue",
     "valueName": "pageUrl",
-    "value":"http://www.163.com", //*
-    "valueProcess":[] //*
+    "value":"http://www.163.com",
+    "valueProcess":[]
 }
 ```
 
@@ -168,11 +168,11 @@ valueProcess | 命令队列 | 命令队列 | 可空 | 否 | value为空且则val
 ----|----|----|----|----|----
 exp | 赋值 | 字符 | 可空 | 可 | 优先处理exp参数
 value | 变量名 | 字符 | 可空 | 否 | 当exp参数为空时，获取value名的值(逐步弃用)
-```
+```json
 {
     "action": "getValue",
-    "value": "url",   //*
-    "exp": "{novelName}-{writer}"   //*
+    "value": "url",
+    "exp": "{novelName}-{writer}"
 }
 ```
 
@@ -180,7 +180,7 @@ value | 变量名 | 字符 | 可空 | 否 | 当exp参数为空时，获取value�
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 valueName | 变量名 | 字符 | 否 | 否 | 无
-```
+```json
 {
     "action": "removeValue",
     "valueName": "pageUrl"
@@ -188,21 +188,21 @@ valueName | 变量名 | 字符 | 否 | 否 | 无
 ```
 
 **clearEnv**   清除临时变量集和堆栈，此命令不会影响当前value，不会影响全局变量
-```
+```json
 {
     "action": "clearEnv"
 }
 ```
 
 **push**   当前value入栈，此命令不会影响当前value
-```
+```json
 {
     "action": "push"
 }
 ```
 
 **pop**   弹出最后入栈的值到当前value
-```
+```json
 {
     "action": "pop"
 }
@@ -212,7 +212,7 @@ valueName | 变量名 | 字符 | 否 | 否 | 无
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 keyName | 键值名 | 字符 | 否 | 否 | 无
-```
+```json
 {
     "action": "json",
     "keyName": "pageUrl"
@@ -227,7 +227,7 @@ keyName | 键值名 | 字符 | 否 | 否 | 无
 ----|----|----|----|----|----
 fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
 toValue | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前value
-```
+```json
 {
     "action": "readFile",
     "fileName": "{basePath}/file1.txt",
@@ -240,28 +240,28 @@ toValue | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前valu
 ----|----|----|----|----|----
 fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
 saveContent | 保存内容 | 字符 | 否 | 可 | 无
-mode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，默认为"append"
-```
+fileMode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，默认为"append"
+```json
 {
     "action": "saveFile",
     "fileName": "{basePath}/file1.txt",
-    "saveContent": "{title}\n\r{content}"
-    "mode": "append"
+    "saveContent": "{title}\n\r{content}",
+    "fileMode": "append"
 }
 ```
 
-**saveFile**   保存网络文件内容到本地
+**saveUrlFile**   保存网络文件内容到本地
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
 url | 文件url | 字符 | 否 | 可 | 无
-overwrite | 重写模式 | 布尔型 | 可 | 否 | 默认为false
-```
+fileMode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，默认为"overwrite"
+```json
 {
     "action": "saveUrlFile",
     "fileName": "{basePath}/file1.jpg",
     "url": "http://pic.baidu.com/sample.jpg",
-    "overwrite": true    //* 默认为false
+    "fileMode": "overwrite"
 }
 ```
 
@@ -274,7 +274,7 @@ charset | 编码方式 | 字符 | 可 | 否 | 默认为"utf8"
 headers | 请求头 | 键对 | 可 | 否 | 默认为空对象{}
 body | 请求体 | 字符 | 可 | 可 | 支持"get"和"post"，默认为"get"
 queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
-```
+```json
 {
     "action": "getHtml",
     "url": "{url}/modules/article/search.php",
@@ -303,18 +303,18 @@ property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能
 index | 索引值 | 整形 | 可 | 否 | 空则默认为0，选择结果集中当第几个结果，数值从0开始计算
 
 范例：  
-```
+```json
 {
     "action": "selector",
     "type": "dom",
     "script": "[property=\"og:novel:book_name\"]",
     "property": "content"
-}
+},
 {
     "action": "selector",
     "type": "xpath",
     "script": "//p[3]/span[1]/text()"
-}
+},
 {
     "action": "selector",
     "type": "regexp",
@@ -336,7 +336,7 @@ loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName
 返回结果数组转换为以","分割的字符串后返回。
 
 范例：
-```
+```json
 {
     "action": "for",
     "valueName": "ipage",
@@ -355,7 +355,7 @@ trueProcess | 真单线命令序列 | 命令序列 | 可 | 否 | 无
 falseProcess | 假单线命令序列 | 命令序列 | 可 | 否 | 无
 
 范例：
-```
+```json
 {
     "action": "condition",
     "exps": [{
@@ -377,7 +377,7 @@ falseProcess | 假单线命令序列 | 命令序列 | 可 | 否 | 无
 functionName | 函数名 | 字符 | 否 | 否 | 函数名无效时报错
 parameters | 输入参数 | 键值对 | 可 | 可 | 无
 范例：
-```
+```json
 {
     "action": "callFunction",
     "functionName": "getPage",
@@ -395,7 +395,7 @@ values | 输入参数组 | 字符串数组 | 可 | 可 | 当multiBuilder及value
 multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
 返回结果数组的toString形式，如"abc,ssd,03"
 范例：
-```
+```json
 {
     "action": "callMultiProcess",
     "multiBuilder":[
@@ -416,7 +416,7 @@ multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
 
 **break**    终止当前命令序列  
 范例：
-```
+```json
 {
     "action": "break"
 }
@@ -424,7 +424,7 @@ multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
 
 **exit**    退出程序，当前进程关闭  
 范例：
-```
+```json
 {
     "action": "exit"
 }
@@ -447,7 +447,7 @@ list | 数值列表 | 字符/数组 | 可 | 可 | 定义数值的列表，以","
 exp | 表达式 | 字符 | 可 | 否 | 可以对数值进行修饰，最终组合为结果返回
 
 范例：
-```
+```json
     {
         "action": "fill",
         "type": "range",
@@ -465,18 +465,18 @@ script | 选择表达式 | 字符 | 可 | 否 | 根据type参数，存放相应�
 property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它属性值，如"class"，其代码逻辑为`tmp.attributes[ac["property"]]`
 
 范例：
-```
+```json
 {
     "action": "multiSelector",
     "type": "dom",
     "script": ".sbintro",
     "property": "content"
-}
+},
 {
     "action": "multiSelector",
     "type": "xpath",
     "script": "//a/@href"
-}
+},
 {
     "action": "multiSelector",
     "type": "regexp",
@@ -495,12 +495,12 @@ condExps | 条件表达式 | 数组 | 可 | 可 | 删除符合条件的值。
 index > except > condExps
 
 范例：
-```
+```json
     {
         "action": "remove",
-        "index": 0,    //*
-        "except": 2    //*
-        "condExps": []    //*
+        "index": 0, 
+        "except": 2,
+        "condExps": []
     }
 ```
 
@@ -510,7 +510,7 @@ index > except > condExps
 asc | 正序 | 布尔型 | 可 | 否 | 默认为正向排序
 
 范例：
-```
+```json
     {
         "action": "sort",
         "asc": true
@@ -524,7 +524,7 @@ begin | 开始位置 | 整型 | 可 | 否 | 为空则默认为0
 end | 结束位置 | 整型 | 可 | 否 | 为空则默认到最后
 
 范例：
-```
+```json
     {
         "action": "sort",
         "begin": 1,
@@ -540,12 +540,12 @@ fileMode | 写入方式 | 字符 | 可 | 可 | 默认为append方式，可以为
 encoding | 编码方式 | 字符 | 可 | 可 | 默认为utf8，也可以是gbk
 
 范例：
-```
+```json
     {
         "action": "saveMultiToFile",
         "fileName": "{basePath}/file1.txt",
-        "fileMode": "append" //overwrite
-        "encoding": "utf8"   //gbk
+        "fileMode": "append",
+        "encoding": "utf8"  
     }
 ```
 
@@ -555,7 +555,7 @@ encoding | 编码方式 | 字符 | 可 | 可 | 默认为utf8，也可以是gbk
 eachProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线处理
 
 范例：
-```
+```json
     {
         "action": "foreach",
         "eachProcess": [
@@ -578,9 +578,9 @@ preProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线预�
 splitProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行多线分解处理
 
 范例：
-```
+```json
     {
-        "action": "foreach2step",    //旧版本兼容
+        "action": "foreach2step",
         "preProcess": [
             {
                 "action": "selector",
@@ -610,20 +610,20 @@ exp | 表单式 | 字符/字符串数组 | | 可 | 除"isNull"、"isEmpty"、"no
 source | 源内容 | 字符 | 可 | 可 | 与条件表达式运算的源内容，如为空则当前value为源内容
 not | 非操作 | 布尔 | 可 | 否 | 此条件表达式最终结果是否取非操作
 relation | 条件关系 | 字符 | 可 | 否 | 与上一条件的逻辑关系，支持"and"和"or"
-```
+```json
 {
     "expType": "in",
     "exp": "jpg,png,jpeg,gif,bmp",
     "not": true
-}
+},
 {
     "expType": "compare",
     "exp": "成功删除"
-}
+},
 {
     "expType": "contain",
     "exp": "viewthread.php",
-    "source": "{url}", //* 存在则优先处理
+    "source": "{url}",
     "not": true,
     "relation": "and"
 }
@@ -647,7 +647,7 @@ system.date | 当前日期 | 字符 | 返回当前日期，如"2021年11月11日
 除了脚本引擎现有的命令外，还可以扩展属于你自己的命令。
 
 脚本引擎定义了单线命令扩展方法及多线命令扩展方法，具体定义如下
-```
+```dart
 typedef singleAction = Future<String?> Function(String? value, dynamic ac,
     {String? debugId, bool? debugMode});
     
@@ -659,7 +659,7 @@ typedef multiAction = Future<List<String?>> Function(
 在初始化脚本引擎时，你可以一并将extendSingleAction和extendMultiAction赋值即可。
 
 对系统变量，脚本引擎也支持扩展定义，只需要实现`extendValueProvide`方法即可，该方法的定义如下：
-```
+```dart
 typedef valueProvider = String Function(String exp);
 ```
 

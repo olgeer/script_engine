@@ -154,7 +154,7 @@
         {
           "action": "saveFile",
           "fileName": "{savePath}{url}list.json",
-          "mode": "overwrite"
+          "fileMode": "overwrite"
         },
         {
           "action": "print",
