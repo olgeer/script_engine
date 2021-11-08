@@ -35,7 +35,7 @@ class ScriptEngine {
   multiAction? extendMultiAction;
   valueProvider? extendValueProvide;
 
-  actionEvent? onAction;
+  actionEvent? beforeAction,afterAction;
   actionEvent? onPause;
   void Function(ScriptEngineState s)? onScriptEngineStateChange;
 
@@ -53,7 +53,8 @@ class ScriptEngine {
       {this.extendSingleAction,
       this.extendMultiAction,
       this.extendValueProvide,
-      this.onAction,
+        this.beforeAction,
+      this.afterAction,
         this.onPause,
       this.onScriptEngineStateChange,
       this.debugMode = false})
@@ -256,6 +257,9 @@ class ScriptEngine {
       {String debugId = ""}) async {
     String? ret;
     bool refreshValue = true;
+
+    if(beforeAction!=null)beforeAction!(value, ac, ret, debugId,this);
+
     if (debugMode) logger.fine("--$debugId--💃action($ac)");
     if (debugMode) logger.finest("--$debugId--value : $value");
 
@@ -337,7 +341,7 @@ class ScriptEngine {
           String b = ac["back"] ?? "";
           f = exchgValue(f)!;
           b = exchgValue(b)!;
-          ret = "$f$value$b";
+          ret = "$f${value??""}$b";
           break;
         case "split":
           //             {
@@ -517,7 +521,7 @@ class ScriptEngine {
             String? body = exchgValue(ac["body"]);
 
             Encoding encoding =
-                "gbk".compareTo(exchgValue(ac["charset"])??"") == 0 ? gbk : utf8;
+                "utf8".compareTo(exchgValue(ac["charset"])??"") == 0 ? utf8 : gbk;
 
             // Map<String, dynamic> queryParameters =
             //     Map.castFrom(ac["queryParameters"] ?? {});
@@ -562,7 +566,11 @@ class ScriptEngine {
           //           {
           //             "action": "htmlDecode"
           //           }
-          ret = HtmlCodec().decode(value);
+          if(value!=null && value.isNotEmpty) {
+            ret = HtmlCodec().decode(value);
+          }else{
+            ret=value;
+          }
           break;
         case "selectorOne":
           switch (ac["type"]) {
@@ -625,47 +633,50 @@ class ScriptEngine {
           //             "script": "div.book_list",
           //             "index": 1
           //           }
-          switch (ac["type"]) {
-            case "dom":
-              var tmps =
-                  HtmlParser(value).parse().querySelectorAll(exchgValue(ac["script"])??"");
-              var tmp;
-              if ((tmps.length) > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
-              if (tmp != null) {
-                switch (ac["property"] ?? "innerHtml") {
-                  case "innerHtml":
-                    ret = tmp.innerHtml;
-                    break;
-                  case "outerHtml":
-                    ret = tmp.outerHtml;
-                    break;
-                  case "content":
-                    ret = tmp.attributes["content"];
-                    break;
-                  default:
-                    ret = tmp.attributes[ac["property"]] ?? "";
-                }
-              } else
-                ret = "";
-              break;
-            case "xpath":
-              var tmps =
-                  XPath.source(value ?? "").query(ac["script"] ?? "").list();
-              if (tmps.length > 0)
-                ret = tmps.elementAt(ac["index"] ?? 0);
-              else
-                ret = "";
-              break;
-            case "regexp":
-              RegExpMatch? rem = RegExp(exchgValue(ac["script"]) ?? "")
-                  .firstMatch(value ?? "");
-              if (rem != null) {
-                if (rem.groupCount > 0)
-                  ret = rem.group(ac["index"] ?? 0);
+          if(value!=null && value.isNotEmpty) {
+            switch (ac["type"]) {
+              case "dom":
+                var tmps = HtmlParser(value)
+                    .parse()
+                    .querySelectorAll(exchgValue(ac["script"]) ?? "");
+                var tmp;
+                if ((tmps.length) > 0) tmp = tmps.elementAt(ac["index"] ?? 0);
+                if (tmp != null) {
+                  switch (ac["property"] ?? "innerHtml") {
+                    case "innerHtml":
+                      ret = tmp.innerHtml;
+                      break;
+                    case "outerHtml":
+                      ret = tmp.outerHtml;
+                      break;
+                    case "content":
+                      ret = tmp.attributes["content"];
+                      break;
+                    default:
+                      ret = tmp.attributes[ac["property"]] ?? "";
+                  }
+                } else
+                  ret = "";
+                break;
+              case "xpath":
+                var tmps =
+                    XPath.source(value).query(ac["script"] ?? "").list();
+                if (tmps.length > 0)
+                  ret = tmps.elementAt(ac["index"] ?? 0);
                 else
-                  ret = rem.group(0);
-              }
-              break;
+                  ret = "";
+                break;
+              case "regexp":
+                RegExpMatch? rem = RegExp(exchgValue(ac["script"]) ?? "")
+                    .firstMatch(value);
+                if (rem != null) {
+                  if (rem.groupCount > 0)
+                    ret = rem.group(ac["index"] ?? 0);
+                  else
+                    ret = rem.group(0);
+                }
+                break;
+            }
           }
           break;
         case "for":
@@ -817,7 +828,7 @@ class ScriptEngine {
       // throw e;
     }
 
-    if (onAction != null) onAction!(value, ac, ret, debugId,this);
+    if (afterAction != null) afterAction!(value, ac, ret, debugId,this);
 
     if (debugMode && ret != null)
       logger.fine("--$debugId--⚠️️result[${shortString(ret)}]");
@@ -851,6 +862,9 @@ class ScriptEngine {
   Future<List<String?>> mAction(List<String?> value, dynamic ac,
       {String debugId = ""}) async {
     List<String?> ret = [];
+
+    if(beforeAction!=null)beforeAction!(value, ac, ret, debugId,this);
+
     if (debugMode)
       logger.fine(
           "--$debugId--🎾multiAction($ac,${shortString(value.toString())})");
@@ -884,18 +898,20 @@ class ScriptEngine {
                 var listVar = ac["list"];
                 if (listVar is String) {
                   for (String i in exchgValue(listVar)!.split(",")) {
-                    setValue(ac["valueName"], i);
+                    setValue(ac["valueName"]??"filltmp", i);
                     if (exchgValue(ac["exp"]) != null) retList.add(
                         exchgValue(ac["exp"])!);
                   }
                 }
                 if (listVar is List) {
                   for (int i in listVar) {
-                    setValue(ac["valueName"], i.toString());
+                    setValue(ac["valueName"]??"filltmp", i.toString());
                     if (exchgValue(ac["exp"]) != null) retList.add(
                         exchgValue(ac["exp"])!);
                   }
                 }
+              }else{
+                logger.warning("Script error: Missing \"list\" part !");
               }
               break;
             case "range":
@@ -903,7 +919,7 @@ class ScriptEngine {
                 var rangeVar = ac["range"];
                 if (rangeVar is List) {
                   for (int i = rangeVar[0]; i <= rangeVar[1]; i++) {
-                    setValue(ac["valueName"], i.toString());
+                    setValue(ac["valueName"]??"filltmp", i.toString());
                     if (exchgValue(ac["exp"]) != null) retList.add(
                         exchgValue(ac["exp"])!);
                   }
@@ -917,12 +933,17 @@ class ScriptEngine {
                           exchgValue(rangeVar)!.split("-")[1]) ??
                           1);
                   i++) {
-                    setValue(ac["valueName"], i.toString());
+                    setValue(ac["valueName"]??"filltmp", i.toString());
                     if (exchgValue(ac["exp"]) != null) retList.add(
                         exchgValue(ac["exp"])!);
                   }
                 }
+              }else{
+                logger.warning("Script error: Missing \"range\" part !");
               }
+              break;
+            default:
+              logger.warning("Script error: Unsupport type \"\" ${ac["type"]}!");
               break;
           }
         }
@@ -1038,15 +1059,19 @@ class ScriptEngine {
       case "saveMultiToFile":
         //            {
         //               "action": "saveMultiToFile",
-        //               "fileName": "{basePath}/file1.txt"
+        //               "fileName": "{basePath}/file1.txt,
+        //               "fileMode": "append" //overwrite
+        //               "encoding": "utf8"   //gbk
         //             },
         File saveFile;
+        FileMode fileMode="append".compareTo(exchgValue(ac["fileMode"])??"append")==0?FileMode.append:FileMode.write;
+        Encoding encoding="utf8".compareTo(exchgValue(ac["encoding"])??"utf8")==0?utf8:gbk;
         if (ac["fileName"] != null) {
           saveFile = File(exchgValue(ac["fileName"])!);
           if (!saveFile.existsSync()) saveFile.createSync(recursive: true);
           for (String? line in value) {
             saveFile.writeAsStringSync(line ?? "",
-                mode: FileMode.append, encoding: utf8, flush: true);
+                mode: fileMode, encoding: encoding, flush: true);
           }
           ret = value;
         }
@@ -1082,8 +1107,9 @@ class ScriptEngine {
         ret = tmpList;
         break;
       case "foreach2":
+      case "foreach2step":
         //        {
-        //           "action": "foreach2",    //旧版本兼容
+        //           "action": "foreach2step",    //旧版本兼容
         //           "preProcess": [
         //             {
         //               "action": "selector",
@@ -1125,7 +1151,7 @@ class ScriptEngine {
         break;
     }
 
-    if (onAction != null) onAction!(value, ac, ret, debugId,this);
+    if (afterAction != null) afterAction!(value, ac, ret, debugId,this);
 
     if (debugMode)
       logger.fine("--$debugId--🧩result[${shortString(ret.toString())}]");

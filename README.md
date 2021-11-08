@@ -219,6 +219,7 @@ keyName | 键值名 | 字符 | 否 | 否 | 无
 }
 ```
 
+
 ### 文件操作  
 
 **readFile**   读取文件内容到变量
@@ -299,6 +300,7 @@ queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
 type | 选择器类型 | 字符 | 否 | 否 | 暂时支持"dom"、"xpath"、"regexp"这三种选择器
 script | 选择表达式 | 字符 | 否 | 否 | 根据type参数，存放相应选择器的选择表达式
 property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它值，其代码逻辑为`tmp.attributes[ac["property"]]`
+index | 索引值 | 整形 | 可 | 否 | 空则默认为0，选择结果集中当第几个结果，数值从0开始计算
 
 范例：  
 ```
@@ -316,24 +318,7 @@ property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能
 {
     "action": "selector",
     "type": "regexp",
-    "script": "<[^>]*>"
-}
-```
-
-**selectorAt**    取表达式中的值到value，符合表达式的结果有多条时使用
-参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
-----|----|----|----|----|----
-type | 选择器类型 | 字符 | 否 | 否 | 暂时支持"dom"、"xpath"、"regexp"这三种选择器
-script | 选择表达式 | 字符 | 否 | 否 | 根据type参数，存放相应选择器的选择表达式
-property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能的值有"innerHtml"、"outerHtml"、"content"等，如果property为空则相当于"innerHtml"值。除了之前列出的可用值外，还可以有其它值，其代码逻辑为`tmp.attributes[ac["property"]]`
-index | 取值位置 | 整形 | 否 | 否 | 多个结果中的第几个，位置从0开始算
-
-范例：
-```
-{
-    "action": "selectorAt",
-    "type": "dom",
-    "script": "div.book_list",
+    "script": "<[^>]*>",
     "index": 1
 }
 ```
@@ -445,16 +430,32 @@ multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
 }
 ```
 
-### 扩展命令  
-引擎支持命令拓展，可在初始化引擎时，设置extendSingleAction方法即可实现。
-extendSingleAction方法的定义为`Future<String?> Function(String? value, dynamic ac,{String? debugId, bool? debugMode})`
-
 
 ## 多线命令列表  
 多线命令的入口参数为字符串数组，输出参数也是字符串数组
 **pause**    暂停命令队列处理并进入循环等待状态，直至引擎状态state不等于ScriptEngineState.Pause为止，并触发onPause方法。
 如onPause方法未设置则本命令无效，继续执行命令队列。
 此命令不影响value值，并使ret等于value。
+
+**fill**    填装数值到变量或内存
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+type | 填值方式 | 字符 | 否 | 否 | 暂时支持"list"、"range"这几种
+valueName | 填充变量名 | 字符 | 可 | 否 | 将数值以此变量名存放，为空则存放到默认到value内
+range | 数值范围 | 字符/数组 | 可 | 可 | 定义数值范围的开始和结束，以"-"分割；如为数组则第一个对象是取值范围开始，第二个是取值结束。
+list | 数值列表 | 字符/数组 | 可 | 可 | 定义数值的列表，以","分割；如为数组则直接取值，
+exp | 表达式 | 字符 | 可 | 否 | 可以对数值进行修饰，最终组合为结果返回
+
+范例：
+```
+    {
+        "action": "fill",
+        "type": "range",
+        "valueName": "ipage",
+        "range": "1-6",
+        "exp": "{muluPageUrl}_{ipage}/"
+    }
+```
 
 **multiSelector**    取表达式中的值到value数组
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
@@ -482,6 +483,121 @@ property | 属性值 | 字符 | 可 | 否 | 仅当type为"dom"时有效，可能
     "script": "<[^>]*>"
 }
 ```
+
+**remove**    对value进行条件删除
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+index | 索引值 | 整形 | 可 | 否 | 要删除值的数组下标，可以为空
+except | 例外索引值 | 整形 | 可 | 否 | 例外索引，删除除例外外的所有值，可以为空
+condExps | 条件表达式 | 数组 | 可 | 可 | 删除符合条件的值。
+
+以上三种方式的优先级如下：
+index > except > condExps
+
+范例：
+```
+    {
+        "action": "remove",
+        "index": 0,    //*
+        "except": 2    //*
+        "condExps": []    //*
+    }
+```
+
+**sort**    对value进行排序
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+asc | 正序 | 布尔型 | 可 | 否 | 默认为正向排序
+
+范例：
+```
+    {
+        "action": "sort",
+        "asc": true
+    }
+```
+
+**sublist**    取子列表
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+begin | 开始位置 | 整型 | 可 | 否 | 为空则默认为0
+end | 结束位置 | 整型 | 可 | 否 | 为空则默认到最后
+
+范例：
+```
+    {
+        "action": "sort",
+        "begin": 1,
+        "end": 20
+    }
+```
+
+**saveMultiToFile**    将value保存到文件
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+fileName | 文件名 | 字符 | 否 | 可 | 保存到文件名，带完整路径
+fileMode | 写入方式 | 字符 | 可 | 可 | 默认为append方式，可以为overwrite方式
+encoding | 编码方式 | 字符 | 可 | 可 | 默认为utf8，也可以是gbk
+
+范例：
+```
+    {
+        "action": "saveMultiToFile",
+        "fileName": "{basePath}/file1.txt",
+        "fileMode": "append" //overwrite
+        "encoding": "utf8"   //gbk
+    }
+```
+
+**foreach**    对value数组逐条进行处理，结果整合成数组
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+eachProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线处理
+
+范例：
+```
+    {
+        "action": "foreach",
+        "eachProcess": [
+            {
+                "action": "print",
+                "value": "正在下载{this}"
+            },
+            {
+                "action": "callFunction",
+                "functionName": "downloadPic"
+            }
+        ]
+    }
+```
+
+**foreach2step**    对value数组逐条进行处理，结果整合成数组
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|----|----
+preProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线预处理处理
+splitProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行多线分解处理
+
+范例：
+```
+    {
+        "action": "foreach2step",    //旧版本兼容
+        "preProcess": [
+            {
+                "action": "selector",
+                "type": "dom",
+                "script": ".xs-list"
+            }
+        ],
+        "splitProcess": [
+            {
+                "action": "multiSelector",
+                "type": "xpath",
+                "script": "//ul/li"
+            }
+        ]
+    }
+```
+
 
 ## 条件表达式  
 
@@ -511,4 +627,48 @@ relation | 条件关系 | 字符 | 可 | 否 | 与上一条件的逻辑关系，
     "not": true,
     "relation": "and"
 }
+```
+
+## 系统变量
+
+脚本引擎除自定义变量外，还内嵌了部分系统变量，方便使用。
+
+变量名 | 描述 | 类型 | 说明
+----|----|----|----
+system.platform | 当前平台 | 字符 | 返回当前平台的名称，如"Android"
+system.platformVersion | 平台版本 | 字符 | 返回当前平台的版本，如"11"
+system.currentdir | 当前目录 | 字符 | 返回程序当前的目录，如"/Users/user/Documents"
+system.now | 当前时间 | 字符 | 返回当前时间，如"2021年11月11日 12时36分"
+system.date | 当前日期 | 字符 | 返回当前日期，如"2021年11月11日"
+
+
+## 扩展
+
+除了脚本引擎现有的命令外，还可以扩展属于你自己的命令。
+
+脚本引擎定义了单线命令扩展方法及多线命令扩展方法，具体定义如下
+```
+typedef singleAction = Future<String?> Function(String? value, dynamic ac,
+    {String? debugId, bool? debugMode});
+    
+typedef multiAction = Future<List<String?>> Function(
+    List<String?> value, dynamic ac,
+    {String? debugId, bool? debugMode});
+```
+
+在初始化脚本引擎时，你可以一并将extendSingleAction和extendMultiAction赋值即可。
+
+对系统变量，脚本引擎也支持扩展定义，只需要实现`extendValueProvide`方法即可，该方法的定义如下：
+```
+typedef valueProvider = String Function(String exp);
+```
+
+
+## 事件
+
+脚本引擎支持三种事件，一个是当任意命令执行前触发的`beforeAction`事件，一个是当任意命令执行完毕后触发的`afterAction`事件，还有一个是当进入调试模式时，由`pause`命令触发当onPause事件。
+事件方法的定义如下：
+```dart
+typedef actionEvent = Future<void> Function(
+    dynamic value, dynamic ac, dynamic ret, String debugId,ScriptEngine se);
 ```

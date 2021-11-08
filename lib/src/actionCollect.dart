@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+// import 'package:charset_converter/charset_converter.dart';
 import 'package:dio/adapter.dart';
 import 'package:html/dom.dart';
 import 'package:dio/dio.dart';
@@ -174,47 +175,55 @@ Future<String?> getHtml(String sUrl,
     };
   };
 
-  if (sUrl != null) {
-    Response? listResp = await callWithRetry(
-        seconds: seconds,
-        retryTimes: retryTimes,
-        retryCall: () async {
-          try {
-            if (method == RequestMethod.get) {
-              return await dio!.get(sUrl,
-                  queryParameters: queryParameters,
-                  options: Options(
-                      headers: headers, responseType: ResponseType.bytes));
-            } else {
-              return await dio!.post(sUrl,
-                  queryParameters: queryParameters,
-                  options: Options(
-                      headers: headers, responseType: ResponseType.bytes),
-                  data: body);
-            }
-          } catch (e) {
-            if (e is DioError && e.response?.statusCode == 302 && e.response?.headers["location"]!=null) {
-              try {
-                String newUrl =
-                    "${getDomain(sUrl)}${e.response?.headers["location"]?.first}";
-                logger.finer("status code:302 and redirect to $newUrl");
-                return await dio!.get(newUrl,
-                    options: Options(responseType: ResponseType.bytes));
-              } catch (e) {
-                print(e);
-                return null;
-              }
-            } else {
-              // print(e);
+  Response? listResp = await callWithRetry(
+      seconds: seconds,
+      retryTimes: retryTimes,
+      retryCall: () async {
+        try {
+          if (method == RequestMethod.get) {
+            return await dio!.get(sUrl,
+                queryParameters: queryParameters,
+                options: Options(
+                    headers: headers, responseType: ResponseType.bytes));
+          } else {
+            return await dio!.post(sUrl,
+                queryParameters: queryParameters,
+                options: Options(
+                    headers: headers, responseType: ResponseType.bytes),
+                data: body);
+          }
+        } catch (e) {
+          if (e is DioError && e.response?.statusCode == 302 && e.response?.headers["location"]!=null) {
+            try {
+              String newUrl =
+                  "${getDomain(sUrl)}${e.response?.headers["location"]?.first}";
+              logger.finer("status code:302 and redirect to $newUrl");
+              return await dio!.get(newUrl,
+                  options: Options(responseType: ResponseType.bytes));
+            } catch (e) {
+              print(e);
               return null;
             }
+          } else {
+            // print(e);
+            return null;
           }
-        });
+        }
+      });
 
-    if (listResp?.statusCode == 200) {
-      html = encoding.decode(listResp?.data);
+  if (listResp!=null && listResp.statusCode == 200) {
+    try {
+      html = encoding.decode(listResp.data);
+    } catch (e) {
+      // if(encoding.name.contains("gb") && (Platform.isAndroid||Platform.isIOS)){
+      //   html = await CharsetConverter.decode("GB18030",listResp.data);
+      // }else{
+        logger.warning("Charset decode error");
+        return null;
+      // }
     }
   }
+
   return html;
 }
 
@@ -245,7 +254,6 @@ String genKey({int lenght = 24}) {
 }
 
 String getDomain(String url) {
-  assert(url != null);
   return url.replaceAll(url.split("/").last, "");
 }
 

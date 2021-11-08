@@ -26,8 +26,9 @@ void main(List<String> args) async{
       logger.warning("Cannot found script file");
       showUsage();
     }
-  }else
+  }else {
     showUsage();
+  }
 
   // var mr=(await se.call("searchNovel",isMultiResult: false));
   // if(mr is List<String>) {
