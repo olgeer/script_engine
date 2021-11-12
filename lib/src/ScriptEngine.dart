@@ -1173,8 +1173,7 @@ class ScriptEngine {
     bool? result;
     if (condCfg != null) {
       for (var cond in condCfg) {
-        Map<String ,dynamic> newCond=cmdLowcase(cond);
-        result = condition(value, newCond, patchResult: result, debugId: debugId);
+        result = condition(value, cond, patchResult: result, debugId: debugId);
       }
     }
     return result ?? false;
@@ -1182,8 +1181,9 @@ class ScriptEngine {
 
   bool? condition(String? value, dynamic ce,
       {bool? patchResult, String? debugId}) {
-    String? condValue = exchgValue(ce["source"]) ?? value;
-    var exp = ce["exp"];
+    Map<String ,dynamic> newCe=cmdLowcase(ce);
+    String? condValue = exchgValue(newCe["source"]) ?? value;
+    var exp = newCe["exp"];
     if (exp is String) {
       exp = exchgValue(exp);
     } else if (exp is List) {
@@ -1192,14 +1192,14 @@ class ScriptEngine {
       }
     }
 
-    switch (strLowcase(ce["exptype"])) {
+    switch (strLowcase(newCe["exptype"]??"")) {
       case "isnull":
         patchResult =
-            relationAction(patchResult, condValue == null, ce["relation"]);
+            relationAction(patchResult, condValue == null, newCe["relation"]);
         break;
       case "isempty":
         patchResult = relationAction(
-            patchResult, condValue?.isEmpty ?? true, ce["relation"]);
+            patchResult, condValue?.isEmpty ?? true, newCe["relation"]);
         break;
       case "in":
         // {
@@ -1208,7 +1208,7 @@ class ScriptEngine {
         //       "not": true
         // }
         patchResult = relationAction(
-            patchResult, (exp as String).split(",").contains(condValue), ce["relation"]);
+            patchResult, (exp as String).split(",").contains(condValue), newCe["relation"]);
         break;
       case "compare":
         // {
@@ -1219,8 +1219,8 @@ class ScriptEngine {
         // }
         patchResult = relationAction(
             patchResult,
-            notAction(ce["not"], condValue?.compareTo(exp) == 0),
-            ce["relation"]);
+            notAction(newCe["not"], condValue?.compareTo(exp) == 0),
+            newCe["relation"]);
         break;
       case "contain":
         // {
@@ -1232,15 +1232,15 @@ class ScriptEngine {
         if (exp is String) {
           patchResult = relationAction(
               patchResult,
-              notAction(ce["not"], condValue?.contains(exp) ?? false),
-              ce["relation"]);
+              notAction(newCe["not"], condValue?.contains(exp) ?? false),
+              newCe["relation"]);
         } else if (exp is List) {
           bool listResult = false;
           exp.forEach((element) {
             listResult = (condValue?.contains(element) ?? false) || listResult;
           });
           patchResult = relationAction(
-              patchResult, notAction(ce["not"], listResult), ce["relation"]);
+              patchResult, notAction(newCe["not"], listResult), newCe["relation"]);
         }
         break;
       case "not": //如果patchResult

@@ -22,8 +22,8 @@ Map<String,dynamic> cmdLowcase(dynamic ac){
 }
 
 String strLowcase(dynamic str){
-  String ret=((str as String)??"").toLowerCase();
-  return ret;
+  // String ret=((str as String)??"").toLowerCase();
+  return (str as String).toLowerCase();
 }
 
 List<String> domList2StrList(List<Element> domList) {
