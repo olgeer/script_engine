@@ -22,7 +22,7 @@ Map<String,dynamic> cmdLowcase(dynamic ac){
 }
 
 String strLowcase(dynamic str){
-  String ret=(str as String).toLowerCase();
+  String ret=((str as String)??"").toLowerCase();
   return ret;
 }
 
