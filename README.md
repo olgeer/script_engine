@@ -152,8 +152,8 @@ index | 取值索引 | 整形/字符 | 可空 | 否 | 为空则相对于0,当为
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 valueName | 变量名称 | 字符 | 否 | 否 | 如查无此分割串则返回""
-value | 变量值 | 字符 | 可空 | 可 | value为空且则valueProcess为空则保存当前value值
-valueProcess | 命令队列 | 命令队列 | 可空 | 否 | value为空且则valueProcess为空则保存当前value值
+value | 变量值 | 字符 | 可空 | 可 | value为空且valueProcess为空则保存当前value值
+valueProcess | 命令队列 | 命令队列 | 可空 | 否 | value为空则对当前value进行valueProcess处理，返回值存入valueName变量中
 ```json
 {
     "action": "setValue",

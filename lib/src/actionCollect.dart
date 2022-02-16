@@ -211,8 +211,8 @@ Future<String?> getHtml(String sUrl,
         } catch (e) {
           if (e is DioError && e.response?.statusCode == 302 && e.response?.headers["location"]!=null) {
             try {
-              String newUrl =
-                  "${getDomain(sUrl)}${e.response?.headers["location"]?.first}";
+              String newUrl =e.response!.headers["location"]!.first;
+              newUrl="${newUrl.contains("http")?"":getDomain(sUrl)}$newUrl";
               logger.finer("status code:302 and redirect to $newUrl");
               return await dio!.get(newUrl,
                   options: Options(responseType: ResponseType.bytes));
