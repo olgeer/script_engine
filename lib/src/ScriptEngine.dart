@@ -356,21 +356,33 @@ class ScriptEngine {
           //             },
           try {
             value=exchgValue(ac["value"])??value;
-            if (ac["index"] is int) {
-              ret = value
-                  ?.split(exchgValue(ac["pattern"]) ?? "")
-                  .elementAt(ac["index"] ?? 0);
-            } else if (ac["index"] is String) {
-              switch (strLowcase(ac["index"])) {
-                case "first":
-                  ret = value?.split(exchgValue(ac["pattern"]) ?? "").first;
-                  break;
-                case "last":
-                  ret = value?.split(exchgValue(ac["pattern"]) ?? "").last;
-                  break;
-                default:
-                  ret = value;
-                  break;
+            if(value!=null) {
+              ///index为负数时，意味着倒数第几个，如-1为倒数第一个，即最后一个，如此类推
+              if (ac["index"] is int) {
+                List<String> splitArray = value.split(exchgValue(ac["pattern"]) ?? "");
+
+                int idx = ac["index"] >= 0 ? ac["index"] :splitArray.length+1+ac["index"];
+                if(idx<=splitArray.length) {
+                  ret = splitArray.elementAt(idx);
+                }else{
+                  logger.warning("下标越界，idx为$idx");
+                }
+              } else if (ac["index"] is String) {
+                switch (strLowcase(ac["index"])) {
+                  case "first":
+                    ret = value
+                        ?.split(exchgValue(ac["pattern"]) ?? "")
+                        .first;
+                    break;
+                  case "last":
+                    ret = value
+                        ?.split(exchgValue(ac["pattern"]) ?? "")
+                        .last;
+                    break;
+                  default:
+                    ret = value;
+                    break;
+                }
               }
             }
           } catch (e) {
