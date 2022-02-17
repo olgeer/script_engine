@@ -370,13 +370,11 @@ class ScriptEngine {
               } else if (ac["index"] is String) {
                 switch (strLowcase(ac["index"])) {
                   case "first":
-                    ret = value
-                        ?.split(exchgValue(ac["pattern"]) ?? "")
+                    ret = value.split(exchgValue(ac["pattern"]) ?? "")
                         .first;
                     break;
                   case "last":
-                    ret = value
-                        ?.split(exchgValue(ac["pattern"]) ?? "")
+                    ret = value.split(exchgValue(ac["pattern"]) ?? "")
                         .last;
                     break;
                   default:
@@ -825,14 +823,14 @@ class ScriptEngine {
           }
           break;
 
-        case "exit":
-          exit(ac["code"] ?? 0);
-          break;
-
         case "break":
           setValue(RETURNCODE, 0);
           ret = null;
           break;
+
+        case "exit":
+          exit(ac["code"] ?? 0);
+          // break;
 
         default:
           if (extendSingleAction != null) {
@@ -865,7 +863,7 @@ class ScriptEngine {
     if (procCfg != null) {
       for (var act in procCfg) {
         if (isExit) break;
-        List<String?> preErrorProc = objs;
+        // List<String?> preErrorProc = objs;
         setValue("thisObjs", objs);
 
         Map<String ,dynamic> newAct=cmdLowcase(act);
