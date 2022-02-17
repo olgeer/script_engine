@@ -361,7 +361,7 @@ class ScriptEngine {
               if (ac["index"] is int) {
                 List<String> splitArray = value.split(exchgValue(ac["pattern"]) ?? "");
 
-                int idx = ac["index"] >= 0 ? ac["index"] :splitArray.length+1+ac["index"];
+                int idx = ac["index"] >= 0 ? ac["index"] :splitArray.length+ac["index"];
                 if(idx<=splitArray.length) {
                   ret = splitArray.elementAt(idx);
                 }else{
@@ -1238,6 +1238,7 @@ class ScriptEngine {
         //       "exp": "viewthread.php",   //  exp: [jpg, gif, bmp, png, jpeg],
         //       "source": "{system.platform}", //* 存在则优先处理
         //       "relation": "and"
+        //       "not": true
         // }
         if (exp is String) {
           patchResult = relationAction(
