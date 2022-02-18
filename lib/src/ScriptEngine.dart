@@ -564,7 +564,7 @@ class ScriptEngine {
                     ? ac["isencode"] ?? true
                         ? Uri.encodeQueryComponent(exchgValue(value)!,
                             encoding: encoding)
-                        : value
+                        : exchgValue(value)
                     : value;
               });
             }
