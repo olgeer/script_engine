@@ -174,15 +174,18 @@ Future<String?> getHtml(String sUrl,
   Dio? dio;
   String? html;
   // Logger().debug("getHtml-[${debugId ?? ""}]", "Ready getHtml: [$sUrl]");
+  // logger.fine("$body");
 
   if (dio == null)
     dio = Dio(BaseOptions(
       connectTimeout: 5000,
       receiveTimeout: 3000,
+      sendTimeout: 2000,
     ));
 
-  if (debugMode)
+  if (debugMode) {
     dio.interceptors.add(LogInterceptor(request: true, responseHeader: true));
+  }
 
   //解决ssl证书过期无法访问的问题
   (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client){
@@ -203,9 +206,12 @@ Future<String?> getHtml(String sUrl,
                     headers: headers, responseType: ResponseType.bytes));
           } else {
             return await dio!.post(sUrl,
-                queryParameters: queryParameters,
+                // queryParameters: queryParameters,
                 options: Options(
-                    headers: headers, responseType: ResponseType.bytes),
+                    headers: headers,
+                    responseType: ResponseType.bytes,
+                    // contentType: "application/x-www-form-urlencoded"
+                    ),
                 data: body);
           }
         } catch (e) {

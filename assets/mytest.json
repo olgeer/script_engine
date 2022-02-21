@@ -1,24 +1,20 @@
 {
   "processName": "testProc",
   "globalValue": {
-    "url": "https://www.boy5.com",
+    "url": "https://www.shutxt.com",
     "encoding": "utf8",
     "searchkey": "围城"
   },
   "beginSegment": [
     {
-      "action": "getValue",
-      "Exp": "{android.applicationDir} - hello world"
-    },
-    {
-      "action": "print"
-    },
-    {
-      "action": "getValue",
-      "Exp": "abc {system.platform} def"
-    },
-    {
-      "action": "print"
+      "action": "getHtml",
+      "url": "{url}/e/search/index.php",
+      "method": "post",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "body": "show=title&keyboard={searchkey}",
+      "charset": "utf8"
     }
   ]
 }

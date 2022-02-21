@@ -1,33 +1,45 @@
-
+import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 import 'package:script_engine/script_engine.dart';
 import 'package:script_engine/src/actionCollect.dart';
 import 'package:script_engine/src/logger.dart';
 
-void main(List<String> args) async{
-  initLogger(logLevel: Level.INFO);
+void main(List<String> args) async {
+  initLogger(logLevel: Level.FINEST);
 
-  if(args.isNotEmpty) {
-    String scriptPath=args[0];
-    if(!scriptPath.startsWith("/"))scriptPath="${getCurrentPath()}/$scriptPath";
+  if (args.isNotEmpty) {
+    String scriptPath = args[0];
+    if (!scriptPath.startsWith("/"))
+      scriptPath = "${getCurrentPath()}/$scriptPath";
 
     Uri script = Uri.file(scriptPath);
     // String script = readFile(scriptPath);
-    if(script!=null) {
-      ScriptEngine se = ScriptEngine(script,extendSingleAction: myAction, debugMode: false,onPause: (v,a,r,i,se)async{
+    if (script != null) {
+      ScriptEngine se = ScriptEngine(script,
+          extendSingleAction: myAction,
+          debugMode: true, onPause: (v, a, r, i, se) async {
         logger.info("\nvalue:$v\naction:$a\nret:$r\ndebugid:$i");
-        se.state=ScriptEngineState.Running;
+        se.state = ScriptEngineState.Running;
       });
       // Future.delayed(Duration(milliseconds: 500),()=>se.run());
       String? result;
-      await se.init().then((value)async =>result=await se.run());
+      await se.init().then((value) async => result = await se.run());
       logger.info(result);
-    }else{
+    } else {
       logger.warning("Cannot found script file");
       showUsage();
     }
-  }else {
+  } else {
     showUsage();
+
+    print((await Dio().post("https://www.shutxt.com/e/search/index.php",
+            data:"keyboard=80&show=title",
+            queryParameters: {},
+            options: Options(
+              headers: {"Content-Type":"application/x-www-form-urlencoded"},
+                responseType: ResponseType.bytes,
+                )))
+        .statusCode);
   }
 
   // var mr=(await se.call("searchNovel",isMultiResult: false));
@@ -50,21 +62,21 @@ void main(List<String> args) async{
   // print("[$re]");
 }
 
-void showUsage(){
+void showUsage() {
   logger.config("Usage : Cmd (scriptPath)");
   logger.info("Try again.");
 }
 
 Future<String?> myAction(String? value, dynamic ac,
-{String? debugId, bool? debugMode})async{
-  String ret="";
-  switch(ac["action"]??""){
+    {String? debugId, bool? debugMode}) async {
+  String ret = "";
+  switch (ac["action"] ?? "") {
     case "lampFlash":
       print("lampFlash");
-      ret=value??"";
+      ret = value ?? "";
       break;
     default:
-      print("Unkown action ${ac["action"]??""}");
+      print("Unkown action ${ac["action"] ?? ""}");
   }
   return ret;
 }

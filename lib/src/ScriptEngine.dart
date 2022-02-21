@@ -164,7 +164,7 @@ class ScriptEngine {
     });
   }
 
-  String? exchgValue(String? exp) {
+  String? exchgValue(String? exp,{Encoding? encoding}) {
     final RegExp valueExp = RegExp('{([^}]+)}');
     final int MAXLOOP = 100;
     int loopTime = 1;
@@ -199,11 +199,12 @@ class ScriptEngine {
                 repValue = extendValueProvide!(valueName);
               break;
             } else if (v is String) {
-              repValue = v;
+              repValue = encoding==null?v:Uri.encodeQueryComponent(v,encoding: encoding);
             } else
               repValue = v.toString();
             break;
         }
+
         ret = ret.replaceFirst(valueExp, repValue ?? "");
       }
       if (loopTime > MAXLOOP) logger.warning("Dead loop ! exp=[$ret]");
@@ -545,21 +546,8 @@ class ScriptEngine {
                     ? utf8
                     : gbk;
 
-            String? body = exchgValue(ac["body"]);
-            if(body!=null){
-              body=ac["isencode"] ?? true
-                  ? Uri.encodeQueryComponent(body,encoding: encoding):body;
-            }
+            String? body = exchgValue(ac["body"],encoding:encoding);
 
-            // Map<String, dynamic> queryParameters =
-            //     Map.castFrom(ac["queryParameters"] ?? {});
-            // queryParameters.forEach((key, value) async {
-            //   if (value is String) {
-            //     queryParameters[key] = Uri.encodeQueryComponent(
-            //         exchgValue(value)!,
-            //         encoding: encoding);
-            //   }
-            // });
             Map<String, dynamic> queryParameters = {};
             var scriptQueryParameters = ac["queryparameters"] ?? {};
             if (scriptQueryParameters is Map) {
@@ -573,7 +561,10 @@ class ScriptEngine {
               });
             }
 
-            Map<String, dynamic> headers = Map.castFrom(ac["headers"] ?? {});
+            Map<String, dynamic> headers = {};
+            Map.castFrom(ac["headers"] ?? {}).forEach((key, value) {
+              headers.putIfAbsent(key, () => value is String?exchgValue(value):value);
+            });
 
             RequestMethod method = "post".compareTo(ac["method"] ?? "get") == 0
                 ? RequestMethod.post
