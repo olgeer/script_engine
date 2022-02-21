@@ -539,13 +539,17 @@ class ScriptEngine {
           String? htmlUrl = exchgValue(ac["url"]) ?? value;
           if (htmlUrl != null) {
             // logger.fine("htmlUrl=$htmlUrl");
-            String? body = exchgValue(ac["body"]);
-
             Encoding encoding =
                 "utf8".compareTo(strLowcase(exchgValue(ac["charset"]) ?? "")) ==
                         0
                     ? utf8
                     : gbk;
+
+            String? body = exchgValue(ac["body"]);
+            if(body!=null){
+              body=ac["isencode"] ?? true
+                  ? Uri.encodeQueryComponent(body,encoding: encoding):body;
+            }
 
             // Map<String, dynamic> queryParameters =
             //     Map.castFrom(ac["queryParameters"] ?? {});

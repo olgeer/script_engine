@@ -1,17 +1,30 @@
 {
   "processName": "testProc",
   "globalValue": {
-    "url": "http://www.txshuku.la",
-    "encoding": "gbk",
-    "searchkey": "King"
+    "url": "http://www.shubox.cn",
+    "encoding": "utf8",
+    "searchkey": "悟空传"
   },
   "beginSegment": [
     {
       "action": "callFunction",
-      "functionName": "searchNovel"
+      "functionName": "showChapter"
     }
   ],
   "functionDefine": {
+    "showChapter": {
+      "process": [
+        {
+          "action": "getHtml",
+          "url": "http://www.shubox.cn/34795/read_1.html",
+          "method": "get",
+          "charset": "utf8"
+        },
+        {
+          "action": "print"
+        }
+      ]
+    },
     "checkTitle": {
       "process": [
         {
