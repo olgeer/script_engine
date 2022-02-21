@@ -587,7 +587,7 @@ class ScriptEngine {
                 queryParameters: queryParameters,
                 debugId: debugId,
                 debugMode:
-                    debugMode && Logger.root.level.value > Level.FINE.value);
+                    debugMode && Logger.root.level.value <= Level.FINE.value);
           } else {
             logger.warning("url is null");
           }
