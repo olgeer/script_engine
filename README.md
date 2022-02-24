@@ -2,18 +2,29 @@
 
 一个执行json脚本的命令引擎
 
+## 引擎初始化
+```ScriptEngine se = ScriptEngine();```
+
+### 引擎状态
+引擎状态分别为：Inited, Ready, Running, Done, Pause
+引擎对象生成时，状态为Inited；
+init()方法后状态为Ready；
+run()方法，开始执行脚本时，状态为Running；
+脚本执行完成状态为Done；
+执行脚本命令pause后，状态为Pause；
+
 ## 引擎所支持的json脚本说明
 
 脚本结构：
 ```json
 {
     "processName": "testProc",
-    "globalValue": {
+    "valueDefine": {
         "url": "https://www.boy5.com",
         "encoding": "utf8",
         "ipage": "1"
     },
-    "beginSegment": [
+    "process": [
         {
             "action": "callFunction",
             "functionName": "searchNovel",
@@ -48,6 +59,7 @@
     }
 }
 ```
+
 其中 **globalValue** 为全局变量定义，全局生效；  
 **beginSegment** 为此脚本的执行入口，引擎将顺序执行脚本直至结束;  
 **functionDefine** 为方法定义，允许定义参数，使用**callFunction**命令调用；  
@@ -75,6 +87,15 @@ value|指定输出格式|字符型|可空|可|可采用{xxx}形式调用参数
 {
     "action": "print",
     "value": "{url} is print"
+}
+```
+
+**pause**   暂停脚本处理程序；同时触发**onPause**事件，直至**onPause**处理完成后继续执行
+参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
+----|----|----|----|-----|----
+```json
+{
+    "action": "pause"
 }
 ```
 
@@ -226,12 +247,12 @@ keyName | 键值名 | 字符 | 否 | 否 | 无
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
-toValue | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前value
+valueName | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前value
 ```json
 {
     "action": "readFile",
     "fileName": "{basePath}/file1.txt",
-    "toValue": "txtfile"
+    "valueName": "txtfile"
 }
 ```
 
@@ -239,13 +260,13 @@ toValue | 变量名 | 字符 | 可 | 可 | 为空时，内容存放到当前valu
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 fileName | 文件路径 | 字符 | 否 | 可 | 本地文件的路径
-saveContent | 保存内容 | 字符 | 否 | 可 | 无
+value | 保存内容 | 字符 | 否 | 可 | 为空时，保存当前value值
 fileMode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，默认为"append"
 ```json
 {
     "action": "saveFile",
     "fileName": "{basePath}/file1.txt",
-    "saveContent": "{title}\n\r{content}",
+    "value": "{title}\n\r{content}",
     "fileMode": "append"
 }
 ```
@@ -271,6 +292,7 @@ fileMode | 打开模式 | 字符 | 可 | 否 | 接受"append"和"overwrite"，�
 url | 网页url | 字符 | 否 | 可 | 无
 method | 请求方式 | 字符 | 可 | 否 | 默认为"get"
 charset | 编码方式 | 字符 | 可 | 否 | 默认为"utf8"
+isencode | 编码使能 | 布尔 | 可 | 否 | 默认为 true ，控制是否对请求参数进行编码
 headers | 请求头 | 键对 | 可 | 否 | 默认为空对象{}
 body | 请求体 | 字符 | 可 | 可 | 支持"get"和"post"，默认为"get"
 queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
@@ -280,6 +302,7 @@ queryParameters | 请求参数 | 键对 | 可 | 可 | 默认为空对象{}
     "url": "{url}/modules/article/search.php",
     "method": "get",
     "charset": "gbk",
+    "isencode": false,
     "queryParameters": {
         "searchtype": "articlename",
         "searchkey": "{searchkey}"
@@ -346,10 +369,11 @@ loopProcess | 循环执行 | 命令队列 | 否 | 否 | 将值存放到valueName
 }
 ```
 
-**condition**    通过循环将值放置到临时变量中
+**condition** / **if**    根据条件判断执行不同的命令序列
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 exps | 条件表达式集 | 表达式数组 | 否 | 否 | 表达式结构见后文
+value | 被判断变量 | 字符串 | 可 | 可 | 优先级高，为空时使用当前value进行判断
 trueProcess | 真单线命令序列 | 命令序列 | 可 | 否 | 无
 falseProcess | 假单线命令序列 | 命令序列 | 可 | 否 | 无
 
@@ -390,7 +414,7 @@ parameters | 输入参数 | 键值对 | 可 | 可 | 无
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
 multiBuilder | 参数组构建 | 多线命令序列 | 可 | | 为空时，用values作为参数
-values | 输入参数组 | 字符串数组 | 可 | 可 | 当multiBuilder及values皆为空时，用[value]作为参数
+value | 输入参数组 | 字符串数组 | 可 | 可 | 当multiBuilder及value皆为空时，用[value]作为参数
 multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
 返回结果数组的toString形式，如"abc,ssd,03"
 范例：
@@ -406,7 +430,7 @@ multiProcess | 处理命令 | 多线命令序列 | 否 | 否 | 无
             "exp": "{url}_{ipage}"
         }
     ],
-    "values": [],
+    "value": [],
     "multiProcess": []
 }
 ```
@@ -516,13 +540,13 @@ index > except > condExps
 **sort**    对value进行排序
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
-asc | 正序 | 布尔型 | 可 | 否 | 默认为正向排序
+isasc | 正序 | 布尔型 | 可 | 否 | 默认为正向排序
 
 范例：
 ```json
     {
         "action": "sort",
-        "asc": true
+        "isasc": true
     }
 ```
 
@@ -569,13 +593,13 @@ encoding | 编码方式 | 字符 | 可 | 可 | 默认为utf8，也可以是gbk
 **foreach**    对value数组逐条进行处理，结果整合成数组
 参数名 | 描述 | 类型 | 可空 | 嵌套变量 | 说明
 ----|----|----|----|----|----
-eachProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线处理
+process | 命令序列 | 数组 | 可 | 否 | 对单条value进行单线处理
 
 范例：
 ```json
     {
         "action": "foreach",
-        "eachProcess": [
+        "Process": [
             {
                 "action": "print",
                 "value": "正在下载{this}"
@@ -624,24 +648,28 @@ splitProcess | 命令序列 | 数组 | 可 | 否 | 对单条value进行多线分
 ----|----|----|----|----|----
 expType | 表单式类型 | 字符 | 否 | 否 | 现在支持的表单式类型有"isNull"、"isEmpty"、"in"、"compare"、"contain"、"not"
 exp | 表单式 | 字符/字符串数组 | | 可 | 除"isNull"、"isEmpty"、"not"外，此字段不可空
-source | 源内容 | 字符 | 可 | 可 | 与条件表达式运算的源内容，如为空则当前value为源内容
-not | 非操作 | 布尔 | 可 | 否 | 此条件表达式最终结果是否取非操作
+value | 源内容 | 字符 | 可 | 可 | 与条件表达式运算的源内容，如为空则当前value为源内容
+isnot | 非操作 | 布尔 | 可 | 否 | 此条件表达式最终结果是否取非操作
 relation | 条件关系 | 字符 | 可 | 否 | 与上一条件的逻辑关系，支持"and"和"or"
 ```json
 {
     "expType": "in",
     "exp": "jpg,png,jpeg,gif,bmp",
-    "not": true
-},
+    "isnot": true
+}
+```
+```json
 {
     "expType": "compare",
     "exp": "成功删除"
-},
+}
+```
+```json
 {
     "expType": "contain",
     "exp": "viewthread.php",
-    "source": "{url}",
-    "not": true,
+    "value": "{url}",
+    "isnot": true,
     "relation": "and"
 }
 ```

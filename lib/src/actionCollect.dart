@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-// import 'package:charset_converter/charset_converter.dart';
+import 'package:fast_gbk/fast_gbk.dart';
 import 'package:dio/adapter.dart';
 import 'package:html/dom.dart';
 import 'package:dio/dio.dart';
@@ -10,14 +10,22 @@ import 'package:script_engine/src/logger.dart';
 typedef FutureCall = Future<Response?> Function();
 enum RequestMethod { get, post }
 
+// Map<String,dynamic> cmdLowcase(dynamic ac){
+//   Map<String,dynamic> newAc=Map.castFrom(ac as Map<String,dynamic>);
+//
+//   var oldKeys=newAc.keys.toList();
+//   for(String oldKey in oldKeys){
+//     newAc.putIfAbsent(oldKey.toLowerCase(), () => newAc.remove(oldKey));
+//   }
+//
+//   return newAc;
+// }
+
 Map<String,dynamic> cmdLowcase(dynamic ac){
-  Map<String,dynamic> newAc=Map.castFrom(ac as Map<String,dynamic>);
-
-  var oldKeys=newAc.keys.toList();
-  for(String oldKey in oldKeys){
-    newAc.putIfAbsent(oldKey.toLowerCase(), () => newAc.remove(oldKey));
-  }
-
+  Map<String,dynamic> newAc={};
+  Map.castFrom(ac as Map<String,dynamic>).forEach((key, value) {
+    newAc.putIfAbsent((key as String).toLowerCase(), () => value);
+  });
   return newAc;
 }
 
@@ -32,6 +40,13 @@ List<String> domList2StrList(List<Element> domList) {
     retList.add(e.outerHtml);
   }
   return retList;
+}
+
+Encoding getEncoding(String charset){
+  return "utf8".compareTo(strLowcase(charset)) ==
+      0
+      ? utf8
+      : gbk;
 }
 
 Future<Response?> callWithRetry(

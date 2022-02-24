@@ -23,11 +23,9 @@
       ]
     }
   ],
-  "functionDefine": {
-    "searchNovel": {
-      "parameters": [
-        "url"
-      ],
+  "functionDefine": [
+    {
+      "processName":"searchNovel",
       "process": [
         {
           "action": "getHtml",
@@ -50,7 +48,7 @@
             },
             {
               "action": "foreach",
-              "eachProcess": [
+              "process": [
                 {
                   "action": "setValue",
                   "valueName": "novelName",
@@ -165,5 +163,5 @@
         }
       ]
     }
-  }
+  ]
 }

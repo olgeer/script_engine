@@ -7,14 +7,34 @@
   },
   "beginSegment": [
     {
-      "action": "getHtml",
-      "url": "{url}/e/search/index.php",
-      "method": "post",
-      "headers": {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      "body": "show=title&keyboard={searchkey}",
-      "charset": "utf8"
+      "cmd": "callfunction",
+      "functionname": "search"
+    }
+  ],
+  "functiondefine": [
+    {
+      "processName": "search",
+      "process": [
+        {
+          "action": "getHtml",
+          "url": "{url}/e/search/index.php",
+          "method": "post",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          "body": "show=title&keyboard={searchkey}",
+          "charset": "utf8"
+        },
+        {
+          "act": "selector",
+          "type": "dom",
+          "script": "title"
+        },
+        {
+          "action": "extraaction1",
+          "params": "{url}"
+        }
+      ]
     }
   ]
 }

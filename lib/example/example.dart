@@ -5,7 +5,7 @@ import 'package:script_engine/src/actionCollect.dart';
 import 'package:script_engine/src/logger.dart';
 
 void main(List<String> args) async {
-  initLogger(logLevel: Level.FINEST);
+  initLogger(logLevel: Level.INFO);
 
   if (args.isNotEmpty) {
     String scriptPath = args[0];
@@ -14,52 +14,35 @@ void main(List<String> args) async {
 
     Uri script = Uri.file(scriptPath);
     // String script = readFile(scriptPath);
-    if (script != null) {
-      ScriptEngine se = ScriptEngine(script,
+    // if (script != null) {
+      ScriptEngine se = ScriptEngine(
+          scriptSource: script,
           extendSingleAction: myAction,
-          debugMode: true, onPause: (v, a, r, i, se) async {
-        logger.info("\nvalue:$v\naction:$a\nret:$r\ndebugid:$i");
-        se.state = ScriptEngineState.Running;
-      });
+          debugMode: true,
+          onPause: (v, a, r, i, se) async {
+            logger.info("\nvalue:$v\naction:$a\nret:$r\ndebugid:$i");
+          }
+      );
       // Future.delayed(Duration(milliseconds: 500),()=>se.run());
       String? result;
       await se.init().then((value) async => result = await se.run());
       logger.info(result);
-    } else {
-      logger.warning("Cannot found script file");
-      showUsage();
-    }
+    // } else {
+    //   logger.warning("Cannot found script file");
+    //   showUsage();
+    // }
   } else {
     showUsage();
 
-    print((await Dio().post("https://www.shutxt.com/e/search/index.php",
-            data:"keyboard=80&show=title",
-            queryParameters: {},
-            options: Options(
-              headers: {"Content-Type":"application/x-www-form-urlencoded"},
-                responseType: ResponseType.bytes,
-                )))
-        .statusCode);
+    // print((await Dio().post("https://www.shutxt.com/e/search/index.php",
+    //         data:"keyboard=80&show=title",
+    //         queryParameters: {},
+    //         options: Options(
+    //           headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    //             responseType: ResponseType.bytes,
+    //             )))
+    //     .statusCode);
   }
-
-  // var mr=(await se.call("searchNovel",isMultiResult: false));
-  // if(mr is List<String>) {
-  //   for (String b in mr) {
-  //     logger.info(b);
-  //   }
-  // }else logger.info(mr);
-  //
-  // logger.severe(getCurrentPath());
-  // var uri=Uri.parse("asset:assets/config.json");
-  // logger.fine("${uri.scheme} -- ${uri.path}");
-
-//   print(RegExp("发表于([^<]*)<").firstMatch("""
-// 发表于 2021-5-12 09:49
-//      <a href="viewpro.php?uid=3341226" target="_blank">资料</a>
-// 发表于 2021-5-13 09:49
-//      <a href="viewpro.php?uid=3341226" target="_blank">资料</a>
-//   """).group(1));
-  // print("[$re]");
 }
 
 void showUsage() {
@@ -67,13 +50,12 @@ void showUsage() {
   logger.info("Try again.");
 }
 
-Future<String?> myAction(String? value, dynamic ac,
-    {String? debugId, bool? debugMode}) async {
+Future<String?> myAction(String? value, Map<String,dynamic> ac,ScriptEngine se,
+    String? debugId, bool? debugMode) async {
   String ret = "";
   switch (ac["action"] ?? "") {
-    case "lampFlash":
-      print("lampFlash");
-      ret = value ?? "";
+    case "extraaction1":
+      ret = "${value??""}-${se.exchgValue(ac["params"])??""}";
       break;
     default:
       print("Unkown action ${ac["action"] ?? ""}");
