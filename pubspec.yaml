@@ -1,6 +1,6 @@
 name: script_engine
 description: a json script engine to do anything
-version: 3.0.0
+version: 3.0.1
 author: olgeer@163.com
 homepage: https://github.com/olgeer/script_engine/
 
@@ -45,8 +45,8 @@ flutter:
   #
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
-  assets:
-    - assets/test.json
+#  assets:
+#    - assets/
 
   # To add custom fonts to your package, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
