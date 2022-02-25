@@ -61,8 +61,7 @@ class ScriptEngine {
       this.afterAction,
       this.onPause,
       this.onScriptEngineStateChange,
-      this.debugMode = false})
-      : assert(scriptSource != null);
+      this.debugMode = false});
 
   Future<ScriptEngine> init() async {
     await initScript(scriptSource);
@@ -323,9 +322,9 @@ class ScriptEngine {
           //               "from": "<(\\S+)[\\S| |\\n|\\r]*?>[^<]*</\\1>",
           //               "to": ""
           //             },
-          if (ac.v(C_FORM) != null) {
+          if (ac.v(C_FROM) != null) {
             ret = value?.replaceAll(
-                RegExp(exchgValue(ac.v(C_FORM))!), exchgValue(ac.v(C_TO)) ?? "");
+                RegExp(exchgValue(ac.v(C_FROM))!), exchgValue(ac.v(C_TO)) ?? "");
           } else {
             ret = value;
           }
