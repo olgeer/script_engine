@@ -25,10 +25,12 @@ packages:
   base_utility:
     dependency: "direct main"
     description:
-      path: "../base_utility"
-      relative: true
-    source: path
-    version: "1.1.1"
+      path: "."
+      ref: master
+      resolved-ref: "48ab130bfbd89fb0d9f0b0628884ab08afd822b6"
+      url: "https://github.com/olgeer/base_utility.git"
+    source: git
+    version: "1.1.2"
   basic_utils:
     dependency: transitive
     description:
