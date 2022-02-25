@@ -1,6 +1,6 @@
 name: script_engine
 description: a json script engine to do anything
-version: 3.0.1
+version: 3.0.2
 author: olgeer@163.com
 homepage: https://github.com/olgeer/script_engine/
 
@@ -11,16 +11,21 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  dio: ^4.0.0
-  fast_gbk: ^1.0.0
+#  dio: ^4.0.0
+#  fast_gbk: ^1.0.0
 #  charset_converter: ^2.0.0
 #  xpath_parse: ^1.0.2
-  logging: ^1.0.1
-  console: ^4.1.0
-  xpath_parse:
-    git:
-      url: git://github.com/olgeer/xpath.git
-      ref: main
+#  logging: ^1.0.1
+#  console: ^4.1.0
+#  xpath_parse:
+#    git:
+#      url: git://github.com/olgeer/xpath.git
+#      ref: main
+  base_utility:
+#    git:
+#      url: https://github.com/olgeer/base_utility.git
+#      ref: master
+    path: ../base_utility
 #  fast_gbk:
 #    git:
 #      url: https://github.com/lixiangthinker/fast_gbk.git

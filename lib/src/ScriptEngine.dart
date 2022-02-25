@@ -2,10 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:html/parser.dart';
 import 'package:html/dom.dart';
-import 'package:logging/logging.dart';
-import 'package:script_engine/src/logger.dart';
+import 'package:base_utility/console_utility.dart';
 import 'package:xpath_parse/xpath_selector.dart';
-import 'actionCollect.dart';
 import 'cmdDefine.dart';
 import 'HtmlCodec.dart';
 
@@ -74,18 +72,18 @@ class ScriptEngine {
   static Future<String?> loadScript(dynamic scriptSrc) async {
     String? s;
     if (scriptSrc is Uri) {
-      if (scriptSrc.isScheme("file")) s = readFile(File(scriptSrc.path));
+      if (scriptSrc.isScheme("file")) s = read4File(File(scriptSrc.path));
       if (scriptSrc.isScheme("https") || scriptSrc.isScheme("http"))
         s = await getHtml(scriptSrc.toString());
     }
     if (scriptSrc is File) {
-      s = readFile(scriptSrc);
+      s = read4File(scriptSrc);
     }
     if (scriptSrc is String) {
       if (scriptSrc.startsWith("http")) {
         s = await getHtml(scriptSrc);
       } else if (scriptSrc.startsWith("file")) {
-        s = readFile(File(Uri.parse(scriptSrc).path));
+        s = read4File(File(Uri.parse(scriptSrc).path));
       } else {
         s = scriptSrc;
       }
@@ -497,7 +495,7 @@ class ScriptEngine {
           //               "valueName": "txtfile"
           //             },
           if (ac.v(C_FILE_NAME) != null) {
-            String fileContent = readFile(exchgValue(ac.v(C_FILE_NAME))) ?? "";
+            String fileContent = read4File(exchgValue(ac.v(C_FILE_NAME))) ?? "";
             if (ac.v(C_VALUE_NAME) != null) {
               setValue(exchgValue(ac.v(C_VALUE_NAME))!, fileContent);
               ret = value;
@@ -518,7 +516,7 @@ class ScriptEngine {
                         0
                     ? FileMode.append
                     : FileMode.write;
-            saveFile(exchgValue(ac.v(C_FILE_NAME))!,
+            save2File(exchgValue(ac.v(C_FILE_NAME))!,
                 exchgValue(ac.v(C_VALUE)) ?? value ?? "",
                 fileMode: fileMode);
           }
